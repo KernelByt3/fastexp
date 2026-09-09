@@ -46,7 +46,13 @@ public class ConfigManager {
                 if (Files.exists(old) && current.equals("nefor")) {
                     Files.createDirectories(path.getParent());
                     Files.copy(old, path);
-                } else return;
+                } else {
+                    // первого запуска нет — создаём дефолтный конфиг автоматически
+                    loading = false;
+                    save();
+                    loading = true;
+                    return;
+                }
             }
 
             JsonObject root = JsonParser.parseString(Files.readString(path)).getAsJsonObject();

@@ -1,9 +1,10 @@
 package exp.nefor.client.module.impl.movement;
 
-import exp.nefor.client.module.api.Module;
 import exp.nefor.client.module.api.Category;
+import exp.nefor.client.module.api.Module;
 import exp.nefor.client.module.api.setting.KeybindSetting;
 import exp.nefor.client.render.RenderSystem;
+import exp.nefor.client.system.rotation.SmoothRotationManager;
 import exp.nefor.client.util.Color;
 import exp.nefor.client.util.client.MultiActionsBypass;
 import exp.nefor.client.util.client.RotationUtil;
@@ -14,9 +15,15 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
 public class WindHop extends Module {
+
+    private static final float TARGET_PITCH = 89.0f;
+    /** Допуск silent-ротации перед броском — Grim прощает небольшие отклонения. */
+    private static final float AIM_TOLERANCE = 8.0f;
+    private static final long AIM_TIMEOUT_MS = 600;
 
     private final KeybindSetting hop = new KeybindSetting("Бинд WindHop", this::startHop);
 
@@ -32,12 +39,12 @@ public class WindHop extends Module {
         addSettings(hop);
     }
 
-    public boolean isActive(){ return active; }
+    public boolean isActive() { return active; }
 
     private void startHop() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || active) return;
-        if (client.player.isOnGround() == false && client.player.getVelocity().y < -0.3) {
+        if (!client.player.isOnGround() && client.player.getVelocity().y < -0.3) {
             RenderSystem.notification("Сначала приземлись", Color.RED);
             return;
         }
@@ -47,9 +54,9 @@ public class WindHop extends Module {
         }
         // паузим KillAura чтобы не конфликтовать по ротации (BadPacketsJ)
         var ka = exp.nefor.client.module.ModuleManager.get(exp.nefor.client.module.impl.combat.KillAura.class);
-        if(ka!=null && ka.getTarget()!=null){
-            exp.nefor.client.system.rotation.SmoothRotationManager.reset();
-            exp.nefor.client.util.client.RotationUtil.reset();
+        if (ka != null && ka.getTarget() != null) {
+            SmoothRotationManager.reset();
+            RotationUtil.reset();
         }
         active = true;
         stage = 0;
@@ -70,111 +77,94 @@ public class WindHop extends Module {
         long now = System.currentTimeMillis();
 
         switch (stage) {
+            // Начинаем плавный доворот вниз. Камеру игрока НЕ трогаем —
+            // работает только silent-ротация через RotationUtil (миксин подменяет
+            // yaw/pitch только в пакетах, Grim видит легитный плавный поворот).
             case 0 -> {
                 player.setSprinting(false);
                 client.options.sprintKey.setPressed(false);
-                float curYaw = player.getYaw();
-                float curPitch = player.getPitch();
-                float targetPitch = 89.0f;
-                float smoothPitch = exp.nefor.client.util.Mathematics.turnSmooth(curPitch, targetPitch, 6f);
-                exp.nefor.client.util.client.RotationUtil.setRotationRaw(curYaw, smoothPitch, false);
-                exp.nefor.client.system.rotation.SmoothRotationManager.setTarget(curYaw, smoothPitch, exp.nefor.client.system.rotation.RotationProfile.VANILLA);
+                aimDown(player);
                 stage = 1;
                 timer = now;
             }
+            // Ждём пока silent-ротация доплывёт до ~89°. Каждый тик обновляем
+            // цель чтобы SmoothRotationManager не протух (таймаут 380мс внутри).
             case 1 -> {
-                if (now - timer < 80) {
-                    float curYaw = player.getYaw();
-                    float curPitch = player.getPitch();
-                    float smoothPitch = exp.nefor.client.util.Mathematics.turnSmooth(curPitch, 89.0f, 6f);
-                    var prof = exp.nefor.client.system.rotation.RotationProfile.VANILLA;
-                    exp.nefor.client.system.rotation.SmoothRotationManager.setTarget(curYaw, smoothPitch, prof);
-                    exp.nefor.client.util.client.RotationUtil.setRotationRaw(curYaw, smoothPitch, false);
-                    break;
-                }
-                windSlot = findWindChargeHotbar();
-                boolean needSwap = false;
-                if (windSlot == -1) {
-                    windSlot = findWindChargeInv();
-                    if (windSlot == -1) { stop(); break; }
-                    needSwap = true;
-                }
-                if (needSwap) {
-                    boolean moving = client.options.forwardKey.isPressed() || client.options.backKey.isPressed() || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
-                    if (moving) {
-                        // замедляем как просишь — отпускаем WASD на момент свапа, Grim видит input not moving → не флаг MultiActionsC/Simulation
-                        client.options.forwardKey.setPressed(false);
-                        client.options.backKey.setPressed(false);
-                        client.options.leftKey.setPressed(false);
-                        client.options.rightKey.setPressed(false);
-                        client.options.sprintKey.setPressed(false);
-                        player.setSprinting(false);
-                        if (now - timer < 140) {
-                            exp.nefor.client.util.client.RotationUtil.setRotationRaw(player.getYaw(), 89.0f, false);
-                            break;
+                aimDown(player);
+                if (aimReady() || now - timer > AIM_TIMEOUT_MS) {
+                    windSlot = findWindChargeHotbar();
+                    boolean needSwap = false;
+                    if (windSlot == -1) {
+                        windSlot = findWindChargeInv();
+                        if (windSlot == -1) { stop(); break; }
+                        needSwap = true;
+                    }
+                    if (needSwap) {
+                        boolean moving = client.options.forwardKey.isPressed() || client.options.backKey.isPressed()
+                                || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
+                        if (moving) {
+                            // отпускаем WASD на момент свапа: Grim видит input not moving → не флаг MultiActionsC/Simulation
+                            client.options.forwardKey.setPressed(false);
+                            client.options.backKey.setPressed(false);
+                            client.options.leftKey.setPressed(false);
+                            client.options.rightKey.setPressed(false);
+                            client.options.sprintKey.setPressed(false);
+                            player.setSprinting(false);
+                            if (now - timer < AIM_TIMEOUT_MS + 60) break;
                         }
                     }
+                    prevSlot = player.getInventory().getSelectedSlot();
+                    player.setSprinting(false);
+                    if (needSwap) moveToHand(player, windSlot);
+                    else player.getInventory().setSelectedSlot(windSlot);
+                    stage = 2;
+                    timer = now;
                 }
-                prevSlot = player.getInventory().getSelectedSlot();
-                player.setSprinting(false);
-                if (needSwap) moveToHand(player, windSlot);
-                else client.player.getInventory().setSelectedSlot(windSlot);
-                stage = 2;
-                timer = now;
             }
+            // Держим доворот, затем бросок. Никаких ручных Look-пакетов —
+            // лишний PlayerMoveC2SPacket.LookAndOnGround в том же тике и флагит
+            // Grim TickTimer (flying/end) + BadPacketsJ. Silent-ротация через
+            // миксин уже подменяет yaw/pitch в обычных пакетах движения.
             case 2 -> {
-                if (now - timer < 90) {
-                    float curPitch = player.getPitch();
-                    float smoothPitch = exp.nefor.client.util.Mathematics.turnSmooth(curPitch, 89.0f, 6f);
-                    exp.nefor.client.system.rotation.SmoothRotationManager.setTarget(player.getYaw(), smoothPitch, exp.nefor.client.system.rotation.RotationProfile.VANILLA);
-                    exp.nefor.client.util.client.RotationUtil.setRotationRaw(player.getYaw(), smoothPitch, false);
-                    break;
-                }
-                float ry = player.getYaw();
-                float rp = player.getPitch();
-                float useYaw = player.getYaw();
-                float usePitch = 89.0f;
-                // если уже смотришь вниз — не крутим, иначе AimModulo360
-                if(Math.abs(player.getPitch() - 89f) > 35){
-                    // плавно только pitch, yaw не трогаем
-                    player.setPitch(usePitch);
-                    exp.nefor.client.util.client.RotationUtil.setRotationRaw(useYaw, usePitch, false);
-                    // форсим тик-пакет с 89 чтобы BadPacketsJ совпал
-                    player.networkHandler.sendPacket(new net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket.LookAndOnGround(useYaw, usePitch, player.isOnGround(), player.horizontalCollision));
-                    // ждём ещё тик
-                    if(now - timer < 130){
-                        exp.nefor.client.util.client.RotationUtil.setRotationRaw(useYaw, usePitch, false);
-                        break;
-                    }
-                }
-                player.setYaw(useYaw);
-                player.setPitch(usePitch);
-                exp.nefor.client.util.client.RotationUtil.setRotationRaw(useYaw, usePitch, false);
+                aimDown(player);
+                if (!aimReady() && now - timer < AIM_TIMEOUT_MS) break;
                 client.interactionManager.interactItem(player, Hand.MAIN_HAND);
                 player.swingHand(Hand.MAIN_HAND);
-                player.setYaw(ry);
-                player.setPitch(rp);
                 stage = 3;
                 timer = now;
             }
             case 3 -> {
-                if (now - timer < 140) break;
+                if (now - timer < 150) {
+                    aimDown(player);
+                    break;
+                }
                 if (windSlot >= 9) {
                     if (player.getVelocity().horizontalLength() > 0.08) {
-                        timer = now - 100;
+                        timer = now - 110;
                         break;
                     }
                     moveToHand(player, windSlot);
                 } else if (prevSlot != -1 && prevSlot != windSlot) {
-                    client.player.getInventory().setSelectedSlot(prevSlot);
+                    player.getInventory().setSelectedSlot(prevSlot);
                 }
                 lastWindMs = System.currentTimeMillis();
-                exp.nefor.client.system.rotation.SmoothRotationManager.reset();
+                SmoothRotationManager.reset();
                 RotationUtil.reset();
                 prevSlot = -1;
                 stop();
             }
         }
+    }
+
+    /** Плавная цель вниз: yaw сохраняем, pitch → 89. Камера не дёргается. */
+    private void aimDown(ClientPlayerEntity player) {
+        float yaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
+        SmoothRotationManager.setTargetWithFactor(yaw, TARGET_PITCH, 0.38f);
+    }
+
+    private boolean aimReady() {
+        return SmoothRotationManager.isActive()
+                && Math.abs(MathHelper.wrapDegrees(SmoothRotationManager.getPitch() - TARGET_PITCH)) <= AIM_TOLERANCE;
     }
 
     private void moveToHand(ClientPlayerEntity player, int invSlot) {
@@ -193,19 +183,21 @@ public class WindHop extends Module {
 
     private int findWindChargeHotbar() {
         var p = MinecraftClient.getInstance().player;
-        if (p==null) return -1;
-        for (int i=0;i<9;i++) if(p.getInventory().getStack(i).isOf(Items.WIND_CHARGE)) return i;
+        if (p == null) return -1;
+        for (int i = 0; i < 9; i++) if (p.getInventory().getStack(i).isOf(Items.WIND_CHARGE)) return i;
         return -1;
     }
+
     private int findWindChargeInv() {
         var p = MinecraftClient.getInstance().player;
-        if (p==null) return -1;
-        for (int i=9;i<36;i++) if(p.getInventory().getStack(i).isOf(Items.WIND_CHARGE)) return i;
+        if (p == null) return -1;
+        for (int i = 9; i < 36; i++) if (p.getInventory().getStack(i).isOf(Items.WIND_CHARGE)) return i;
         return -1;
     }
+
     private int findWindCharge() {
-        int h=findWindChargeHotbar();
-        if(h!=-1) return h;
+        int h = findWindChargeHotbar();
+        if (h != -1) return h;
         return findWindChargeInv();
     }
 }
