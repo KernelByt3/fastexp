@@ -19,9 +19,13 @@ public final class RotationEngine {
     private RotationEngine() {}
 
     public static void rotateTo(LivingEntity target, RotationProfile profile) {
+        rotateTo(target, profile, 0.0);
+    }
+
+    public static void rotateTo(LivingEntity target, RotationProfile profile, double leadSec) {
         if (target == null) return;
 
-        float[] base = RotationUtil.getRotations(target);
+        float[] base = RotationUtil.getRotations(target, leadSec);
 
         long now = System.currentTimeMillis();
         if (now - lastNoiseTime > 400) {

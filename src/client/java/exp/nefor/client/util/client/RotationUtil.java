@@ -102,11 +102,27 @@ public final class RotationUtil {
         }
     }
     public static float[] getRotations(Entity entity) {
+        return getRotations(entity, 0.0);
+    }
+
+    /**
+     * @param leadSec упреждение по скорости цели (0 = без предикта).
+     * Стрейфящуюся цель прицел ведёт в точку встречи, а не отстаёт.
+     */
+    public static float[] getRotations(Entity entity, double leadSec) {
         if (mc.player == null || entity == null) return new float[]{0.0f, 0.0f};
 
+        Box box = entity.getBoundingBox();
+        if (leadSec > 0) {
+            Vec3d vel = entity.getVelocity();
+            if (vel.lengthSquared() > 0.0004) {
+                box = box.offset(vel.x * leadSec, vel.y * leadSec, vel.z * leadSec);
+            }
+        }
+
         // всегда голова — одна стабильная точка вместо скачущих грудь/ноги/ближайшая
-        float[] raw = calculateAngles(headPoint(entity));
-        lockedAimPoint = headPoint(entity);
+        float[] raw = calculateAngles(headPoint(box));
+        lockedAimPoint = headPoint(box);
         lockedTarget = entity;
 
         // EMA-сглаживание ТОЛЬКО pitch: yaw идёт сырым чтобы доворот
@@ -129,7 +145,10 @@ public final class RotationUtil {
     }
 
     private static Vec3d headPoint(Entity entity) {
-        Box box = entity.getBoundingBox();
+        return headPoint(entity.getBoundingBox());
+    }
+
+    private static Vec3d headPoint(Box box) {
         double cx = (box.minX + box.maxX) * 0.5;
         double cz = (box.minZ + box.maxZ) * 0.5;
         // голова: чуть ниже верха хитбокса, не ниже центра чтобы не уйти в тело

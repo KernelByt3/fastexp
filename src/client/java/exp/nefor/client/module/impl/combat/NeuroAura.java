@@ -39,8 +39,7 @@ public class NeuroAura extends Module {
     public void onDisable() {
         super.onDisable();
         target = null;
-        SmoothRotationManager.reset();
-        RotationUtil.reset();
+        SmoothRotationManager.release();
     }
 
     @Override
@@ -67,8 +66,7 @@ public class NeuroAura extends Module {
             target = findTarget(player, range.getValue());
         }
         if (target == null) {
-            SmoothRotationManager.reset();
-            RotationUtil.reset();
+            SmoothRotationManager.release();
             return;
         }
         if (target != prev) aimLockMs = System.currentTimeMillis();
@@ -80,7 +78,8 @@ public class NeuroAura extends Module {
             mc.options.sprintKey.setPressed(false);
         }
 
-        float[] ang = RotationUtil.getRotations(target);
+        float[] ang = RotationUtil.getRotations(target,
+                MathHelper.clamp(player.distanceTo(target) * 0.06, 0.05, 0.22));
         float baseYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
         float basePitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
         float deltaYaw = MathHelper.wrapDegrees(ang[0] - baseYaw);

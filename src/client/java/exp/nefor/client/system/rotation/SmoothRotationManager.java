@@ -20,6 +20,9 @@ public final class SmoothRotationManager {
     private static boolean active = false;
     private static long lastUpdate = 0;
     private static RotationProfile profile = RotationProfile.VANILLA;
+    // плавный возврат взгляда: после потери цели глайд к камере вместо снапа
+    private static boolean returning = false;
+    private static long returnStart = 0;
 
     // для сглаживания
     private static float velocityYaw = 0;
@@ -39,6 +42,7 @@ public final class SmoothRotationManager {
         targetYaw = currentYaw + delta;
         targetPitch = MathHelper.clamp(pitch, -90f, 90f);
         lastUpdate = System.currentTimeMillis();
+        returning = false;
     }
     public static void setTargetWithFactor(float yaw, float pitch, float factor){
         // кастомный фактор из нейро-модели — без привязки к профилю
@@ -57,6 +61,7 @@ public final class SmoothRotationManager {
         // хак: храним кастомный фактор в bias через переопределение tick factor
         customFactor = factor;
         lastUpdate = System.currentTimeMillis();
+        returning = false;
     }
     private static float customFactor = -1f;
 
@@ -74,11 +79,13 @@ public final class SmoothRotationManager {
         currentPitch = targetPitch = pitch;
         active = true;
         lastUpdate = System.currentTimeMillis();
+        returning = false;
         applyToPlayer(currentYaw, currentPitch);
     }
 
     public static void reset() {
         active = false;
+        returning = false;
         velocityYaw = velocityPitch = 0;
         lastUpdate = 0;
         customFactor = -1f;
@@ -87,6 +94,22 @@ public final class SmoothRotationManager {
             currentPitch = mc.player.getPitch();
         }
         exp.nefor.client.util.client.RotationUtil.reset();
+    }
+
+    /**
+     * Плавное отворачивание: вместо мгновенного сброса к камере ставит
+     * камеру целью глайда. Тик-пакеты продолжают нести плавный поворот —
+     * со стороны сервера всё легитимно, снапа нет.
+     */
+    public static void release() {
+        if (!active || mc.player == null) { reset(); return; }
+        float camYaw = mc.player.getYaw();
+        float delta = MathHelper.wrapDegrees(camYaw - MathHelper.wrapDegrees(currentYaw));
+        targetYaw = currentYaw + delta;
+        targetPitch = MathHelper.clamp(mc.player.getPitch(), -90f, 90f);
+        lastUpdate = System.currentTimeMillis();
+        returning = true;
+        returnStart = lastUpdate;
     }
 
     public static boolean isActive() { return active && System.currentTimeMillis() - lastUpdate < 700; }
@@ -100,6 +123,7 @@ public final class SmoothRotationManager {
         if (mc.player == null) { reset(); return; }
         if (!active) return;
         if (System.currentTimeMillis() - lastUpdate > 380) { reset(); return; }
+        if (returning && System.currentTimeMillis() - returnStart > 500) { reset(); return; }
 
         long nowNs = System.nanoTime();
         float dt = (nowNs - lastTickNs) / 1_000_000_000f;
@@ -116,6 +140,7 @@ public final class SmoothRotationManager {
         else deltaYaw = rawDeltaYaw;
         float deltaPitch = targetPitch - currentPitch;
         if (Math.abs(deltaYaw) < 0.2f && Math.abs(deltaPitch) < 0.2f) {
+            if (returning) { reset(); return; } // взгляд вернулся к камере
             currentYaw = targetYaw;
             currentPitch = targetPitch;
             applyToPlayer(currentYaw, currentPitch);

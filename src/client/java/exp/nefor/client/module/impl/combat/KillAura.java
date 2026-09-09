@@ -59,8 +59,7 @@ public class KillAura extends Module {
         target = null;
         attackedThisJump = false;
         lastAttackTime = 0;
-        exp.nefor.client.system.rotation.SmoothRotationManager.reset();
-        RotationUtil.reset();
+        exp.nefor.client.system.rotation.SmoothRotationManager.release();
     }
 
     @Override
@@ -90,8 +89,7 @@ public class KillAura extends Module {
         if(System.currentTimeMillis() - WindHop.lastWindMs < 900) return;
         boolean holdingWind = player.getMainHandStack().isOf(Items.WIND_CHARGE) || player.getOffHandStack().isOf(Items.WIND_CHARGE);
         if(holdingWind && (player.isUsingItem() || player.getPitch() > 70 || client.options.useKey.isPressed())){
-            exp.nefor.client.system.rotation.SmoothRotationManager.reset();
-            RotationUtil.reset();
+            exp.nefor.client.system.rotation.SmoothRotationManager.release();
             return;
         }
 
@@ -102,12 +100,13 @@ public class KillAura extends Module {
             target = findTarget(player, world, range.getValue());
         }
         if (target == null) {
-            exp.nefor.client.system.rotation.SmoothRotationManager.reset();
-            RotationUtil.reset();
+            exp.nefor.client.system.rotation.SmoothRotationManager.release();
             return;
         }
 
         RotationProfile profile = currentProfile();
+        // упреждение по скорости цели: ведём точку встречи, а не отстаём
+        double leadSec = MathHelper.clamp(player.distanceTo(target) * 0.06, 0.05, 0.22);
 
         // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
         // иначе сервер видит спринт и криты не проходят (кроме KeepSprint)
@@ -118,17 +117,11 @@ public class KillAura extends Module {
         }
         // Нейро: если обучено 5+ минут (dataset 80+ и 60+ epochs) — наводится твоими движениями мыши
         if(neuroLearn.getValue() && exp.nefor.client.system.neural.NeuroDataset.size() >= 80 && exp.nefor.client.system.neural.NeuroModel.get().epochsTrained >= 15){
-            float[] ang = RotationUtil.getRotations(target);
+            float[] ang = RotationUtil.getRotations(target, leadSec);
             float dYaw = net.minecraft.util.math.MathHelper.wrapDegrees(ang[0] - player.getYaw());
             float dPitch = ang[1] - player.getPitch();
             float dist = (float)player.distanceTo(target);
             float factor = exp.nefor.client.system.neural.NeuroModel.get().predict(dYaw, dPitch, dist);
-            var samples = exp.nefor.client.system.neural.NeuroDataset.all();
-            if(!samples.isEmpty()){
-                var s = samples.get((int)(Math.random()*samples.size()));
-                dYaw += s.deltaYaw()*0.40f;
-                dPitch += s.deltaPitch()*0.40f;
-            }
             float nextYaw = player.getYaw() + net.minecraft.util.math.MathHelper.clamp(dYaw * factor, -18f, 18f);
             float nextPitch = net.minecraft.util.math.MathHelper.clamp(player.getPitch() + dPitch*factor, -90f, 90f);
             float gcd = exp.nefor.client.system.rotation.GcdUtil.getGcd();
@@ -136,7 +129,7 @@ public class KillAura extends Module {
             nextPitch = exp.nefor.client.system.rotation.GcdUtil.snapAngle(player.getPitch(), nextPitch, gcd);
             exp.nefor.client.system.rotation.SmoothRotationManager.setTargetWithFactor(nextYaw, nextPitch, factor);
         } else {
-            RotationEngine.rotateTo(target, profile);
+            RotationEngine.rotateTo(target, profile, leadSec);
             // подсказка если включил нейро но не дообучил
             if(neuroLearn.getValue() && player.age % 80 == 0){
                 net.minecraft.client.MinecraftClient.getInstance().player.sendMessage(net.minecraft.text.Text.literal("§7[Neuro] нужно 5+ мин тренировки: "+exp.nefor.client.system.neural.NeuroDataset.size()+"/80, epochs "+exp.nefor.client.system.neural.NeuroModel.get().epochsTrained+"/15 — иди в Title → Нейро Тренировка"), true);
@@ -150,7 +143,7 @@ public class KillAura extends Module {
         if (player.distanceTo(target) > maxReach + 0.5) return;
 
         boolean moving = player.getVelocity().horizontalLength() > 0.08 || client.options.forwardKey.isPressed() || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
-        float aimFov = moving ? 22f : currentProfile().fovCheck;
+        float aimFov = moving ? 24f : currentProfile().fovCheck;
         if (!RotationUtil.isLookingAt(target, aimFov)) return;
 
         if (player.isUsingItem() || player.isBlocking()) return;

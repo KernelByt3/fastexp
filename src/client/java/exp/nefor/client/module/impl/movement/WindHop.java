@@ -133,8 +133,7 @@ public class WindHop extends Module {
                 if (!aimReady()) {
                     if (now - timer > 1200) {
                         restoreSlot(player);
-                        SmoothRotationManager.reset();
-                        RotationUtil.reset();
+                        SmoothRotationManager.release();
                         stop();
                     }
                     break;
@@ -164,8 +163,7 @@ public class WindHop extends Module {
                 if (now - timer < 200) break;
                 restoreSlot(player);
                 lastWindMs = System.currentTimeMillis();
-                SmoothRotationManager.reset();
-                RotationUtil.reset();
+                SmoothRotationManager.release();
                 prevSlot = -1;
                 stop();
             }
