@@ -138,8 +138,18 @@ public class WindHop extends Module {
                     }
                     break;
                 }
+                // В 1.21+ пакет USE_ITEM везёт yaw/pitch, и Grim BadPacketsJ сверяет
+                // их с ротацией из тик-пакетов. Поэтому на момент броска камера
+                // выставляется в silent-поворот (вниз): и mismatch нет, и заряд
+                // летит строго под себя, а не по направлению камеры.
+                float silentYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
+                float ry = player.getYaw(), rp = player.getPitch();
+                player.setYaw(silentYaw);
+                player.setPitch(TARGET_PITCH);
                 client.interactionManager.interactItem(player, Hand.MAIN_HAND);
                 player.swingHand(Hand.MAIN_HAND);
+                player.setYaw(ry);
+                player.setPitch(rp);
                 stage = 3;
                 timer = now;
             }
