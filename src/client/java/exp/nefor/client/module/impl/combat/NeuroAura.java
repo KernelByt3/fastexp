@@ -44,6 +44,10 @@ public class NeuroAura extends Module {
 
     @Override
     public void onTick() {
+        // Снапшот ротации, уже улетевшей на сервер последним flying-пакетом
+        // (см. KillAura): гейты и удар используют его, не свежую интерполяцию.
+        float srvYaw = SmoothRotationManager.getYaw();
+        float srvPitch = SmoothRotationManager.getPitch();
         RotationUtil.onClientTick();
         SmoothRotationManager.tick();
         var mc = MinecraftClient.getInstance();
@@ -109,11 +113,9 @@ public class NeuroAura extends Module {
                 || mc.options.rightKey.isPressed();
         if (!RotationUtil.isLookingAt(target, moving ? 10f : 6f)) return;
 
-        // Строгая проверка хитбокса: луч вдоль silent-ротации обязан пересекать
-        // бокс цели — иначе удар мимо и паливо для античита.
-        float atkYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
-        float atkPitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
-        if (!RaycastUtil.isAimingAt(player, atkYaw, atkPitch, target, maxReach)) return;
+        // Строгая проверка хитбокса по СЕРВЕРНОЙ ротации (снапшот): луч обязан
+        // пересекать бокс цели — иначе удар мимо и Grim Hitboxes.
+        if (!RaycastUtil.isAimingAt(player, srvYaw, srvPitch, target, maxReach)) return;
 
         if (player.getAttackCooldownProgress(0) < 0.995f) return;
         // криты как в KillAura: бьём только в падении, иначе урон режется.
@@ -129,8 +131,8 @@ public class NeuroAura extends Module {
         }
 
         float ry = player.getYaw(), rp = player.getPitch();
-        player.setYaw(atkYaw);
-        player.setPitch(atkPitch);
+        player.setYaw(srvYaw);
+        player.setPitch(srvPitch);
         player.setSprinting(false);
         mc.options.sprintKey.setPressed(false);
         mc.interactionManager.attackEntity(player, target);

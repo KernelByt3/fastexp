@@ -65,12 +65,13 @@ public final class SmoothRotationManager {
     }
     private static float customFactor = -1f;
 
-    /** Мгновенно — только для тестов, WindHop теперь не использует */
+    /** Мгновенная заморозка ротации (WindHop: фиксация перед броском). */
     public static void setInstant(float yaw, float pitch, RotationProfile p) {
         profile = p;
         yaw = MathHelper.wrapDegrees(yaw);
         pitch = MathHelper.clamp(pitch, -90f, 90f);
-        float gcd = p.gcdSnap ? GcdUtil.getGcd() : 0f;
+        // GCD всегда: значение едет в пакеты напрямую, минуя tick-снап
+        float gcd = GcdUtil.getGcd();
         if (gcd > 0.0001f && mc.player != null) {
             yaw = GcdUtil.snapAngle(currentYaw, yaw, gcd);
             pitch = GcdUtil.snapAngle(mc.player.getPitch(), pitch, gcd);
@@ -140,6 +141,11 @@ public final class SmoothRotationManager {
         float deltaPitch = targetPitch - currentPitch;
         if (Math.abs(deltaYaw) < 0.2f && Math.abs(deltaPitch) < 0.2f) {
             if (returning) { reset(); return; } // взгляд вернулся к камере
+            // снап и тут: сырая цель иначе улетит в пакеты вне сетки GCD
+            if (gcd > 0.0001f) {
+                targetYaw = GcdUtil.snapAngle(currentYaw, targetYaw, gcd);
+                targetPitch = GcdUtil.snapAngle(currentPitch, targetPitch, gcd);
+            }
             currentYaw = targetYaw;
             currentPitch = targetPitch;
             applyToPlayer(currentYaw, currentPitch);

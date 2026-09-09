@@ -65,6 +65,11 @@ public class KillAura extends Module {
 
     @Override
     public void onTick() {
+        // Снапшот ротации, уже улетевшей на сервер последним flying-пакетом.
+        // Grim Hitboxes сверяет атаку именно с ней, а не со свежей интерполяцией:
+        // гейты и удар ниже используют srvYaw/srvPitch. Снимать ДО tick()!
+        float srvYaw = exp.nefor.client.system.rotation.SmoothRotationManager.getYaw();
+        float srvPitch = exp.nefor.client.system.rotation.SmoothRotationManager.getPitch();
         RotationUtil.onClientTick();
         exp.nefor.client.system.rotation.SmoothRotationManager.tick();
 
@@ -147,6 +152,11 @@ public class KillAura extends Module {
         float aimFov = moving ? 24f : currentProfile().fovCheck;
         if (!RotationUtil.isLookingAt(target, aimFov)) return;
 
+        // Строгая проверка хитбокса по СЕРВЕРНОЙ ротации (снапшот): луч обязан
+        // пересекать бокс цели — иначе удар мимо и Grim Hitboxes. Именно камера
+        // в хитбоксе, а не приблизительный угол.
+        if (!exp.nefor.client.util.RaycastUtil.isAimingAt(player, srvYaw, srvPitch, target, maxReach)) return;
+
         if (player.isUsingItem() || player.isBlocking()) return;
         // WindHop пауза уже выше, тут не блокируем лишний раз
         if (exp.nefor.client.util.client.MultiActionsBypass.isActive() && !moving) return;
@@ -156,11 +166,11 @@ public class KillAura extends Module {
         if (isMace && maceSpam.getValue()) {
             // СПАМ МЕЙСОМ — не ждём КД
             if (player.fallDistance > 1.5F) {
-                doAttack(client, player, target);
+                doAttack(client, player, target, srvYaw, srvPitch);
                 attackedThisJump = true;
                 lastAttackTime = now;
             } else if (now - lastAttackTime >= 50 + ThreadLocalRandom.current().nextInt(30)) {
-                doAttack(client, player, target);
+                doAttack(client, player, target, srvYaw, srvPitch);
                 attackedThisJump = true;
                 lastAttackTime = now;
             }
@@ -182,16 +192,18 @@ public class KillAura extends Module {
             } else {
                 if (cd < 0.90f) return;
             }
-            doAttack(client, player, target);
+            doAttack(client, player, target, srvYaw, srvPitch);
             attackedThisJump = true;
         }
     }
 
-    private void doAttack(MinecraftClient client, ClientPlayerEntity player, LivingEntity target) {
+    private void doAttack(MinecraftClient client, ClientPlayerEntity player, LivingEntity target, float srvYaw, float srvPitch) {
         float ry = player.getYaw();
         float rp = player.getPitch();
-        player.setYaw(RotationUtil.targetYaw);
-        player.setPitch(RotationUtil.targetPitch);
+        // бьём серверной ротацией (той, что уже видна серверу): атака обязана
+        // совпасть с последним flying-пакетом, иначе Grim Hitboxes
+        player.setYaw(srvYaw);
+        player.setPitch(srvPitch);
         if(!keepSprint.getValue()){
             player.setSprinting(false);
             client.options.sprintKey.setPressed(false);
