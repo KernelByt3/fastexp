@@ -70,7 +70,7 @@ public abstract class Module implements Bindable {
         return enabled;
     }
 
-    void setPressed(boolean pressed) {
+    public void setPressed(boolean pressed) {
         if (pressed && !wasPressed) toggle();
         wasPressed = pressed;
     }

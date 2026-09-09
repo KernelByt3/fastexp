@@ -5,6 +5,7 @@ import exp.nefor.client.module.api.Category;
 import exp.nefor.client.module.api.setting.BooleanSetting;
 import exp.nefor.client.module.api.setting.ChoiceSetting;
 import exp.nefor.client.module.api.setting.SliderSetting;
+import exp.nefor.client.module.impl.movement.WindHop;
 import exp.nefor.client.system.rotation.RotationEngine;
 import exp.nefor.client.system.rotation.RotationProfile;
 import exp.nefor.client.system.rotation.ServerType;
