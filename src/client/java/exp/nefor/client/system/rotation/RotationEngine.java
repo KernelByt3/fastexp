@@ -24,11 +24,12 @@ public final class RotationEngine {
         float[] base = RotationUtil.getRotations(target);
 
         long now = System.currentTimeMillis();
-        if (now - lastNoiseTime > 220) {
+        if (now - lastNoiseTime > 400) {
             float nYaw = profile.noiseYaw;
             float nPitch = nYaw * profile.noisePitchScale;
             cachedYawNoise = (float)(ThreadLocalRandom.current().nextGaussian() * nYaw * 0.30);
-            cachedPitchNoise = (float)(ThreadLocalRandom.current().nextGaussian() * nPitch * 0.18);
+            // вертикальный шум в 2 раза слабее — не дёргает вверх-вниз
+            cachedPitchNoise = (float)(ThreadLocalRandom.current().nextGaussian() * nPitch * 0.09);
             lastNoiseTime = now;
         }
 

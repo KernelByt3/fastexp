@@ -31,6 +31,13 @@ public final class RotationUtil {
     private static Vec3d lockedAimPoint = null;
     private static Entity lockedTarget = null;
 
+    // сглаженная точка прицеливания: углы ползут к голове экспонентой,
+    // а не прыгают за хитбоксом каждый тик (убирает дёргание вверх-вниз)
+    private static Entity smoothTarget = null;
+    private static float smoothYaw = 0f;
+    private static float smoothPitch = 0f;
+    private static final float AIM_SMOOTH = 0.6f;
+
 
     public static void setRotation(float yaw, float pitch, boolean moveCorrectionEnabled) {
         yaw = applyGcdNormalization(yaw);
@@ -53,6 +60,7 @@ public final class RotationUtil {
         moveCorrection = false;
         lockedAimPoint = null;
         lockedTarget = null;
+        smoothTarget = null;
     }
 
     public static void onClientTick() {
@@ -96,41 +104,41 @@ public final class RotationUtil {
     public static float[] getRotations(Entity entity) {
         if (mc.player == null || entity == null) return new float[]{0.0f, 0.0f};
 
-        if (entity == lockedTarget && lockedAimPoint != null) {
-            return calculateAngles(lockedAimPoint);
-        }
-
-        Vec3d bestPoint = selectBestPoint(entity);
-        lockedAimPoint = bestPoint;
+        // всегда голова — одна стабильная точка вместо скачущих грудь/ноги/ближайшая
+        float[] raw = calculateAngles(headPoint(entity));
+        lockedAimPoint = headPoint(entity);
         lockedTarget = entity;
 
-        return calculateAngles(bestPoint);
+        // EMA-сглаживание углов: резкие скачки (прыжок цели, смена тика) гасятся,
+        // прицел ползёт к голове плавно. Скорость ротации не трогаем.
+        if (entity != smoothTarget) {
+            smoothTarget = entity;
+            smoothYaw = raw[0];
+            smoothPitch = raw[1];
+        } else {
+            smoothYaw += MathHelper.wrapDegrees(raw[0] - smoothYaw) * AIM_SMOOTH;
+            smoothPitch += (raw[1] - smoothPitch) * AIM_SMOOTH;
+        }
+        return new float[]{smoothYaw, MathHelper.clamp(smoothPitch, -90.0F, 90.0F)};
     }
     public static void updateLockedPoint(Entity entity) {
-        if (entity == null || entity != lockedTarget || lockedAimPoint == null) return;
-
-        Box box = entity.getBoundingBox();
-        double entityBottom = box.minY;
-        double entityHeight = box.maxY - entityBottom;
-
-        double relativeY = (lockedAimPoint.y - entityBottom) / Math.max(entityHeight, 0.001);
-        relativeY = MathHelper.clamp(relativeY, 0.0, 1.0);
-
-        lockedAimPoint = new Vec3d(
-                box.minX + (box.maxX - box.minX) * 0.5,
-                entityBottom + entityHeight * relativeY,
-                box.minZ + (box.maxZ - box.minZ) * 0.5
-        );
+        if (entity == null) return;
+        // точка всегда голова — просто обновляем кэш
+        lockedAimPoint = headPoint(entity);
+        lockedTarget = entity;
     }
 
-    private static Vec3d selectBestPoint(Entity entity) {
-        if (mc.player == null) return entity.getEyePos();
+    private static Vec3d headPoint(Entity entity) {
         Box box = entity.getBoundingBox();
         double cx = (box.minX + box.maxX) * 0.5;
         double cz = (box.minZ + box.maxZ) * 0.5;
-        double height = box.maxY - box.minY;
-        // ФИКС дёргания вверх-вниз: всегда грудь (0.4) — не скачет между 5 точками каждый тик
-        return new Vec3d(cx, box.maxY - height * 0.35, cz);
+        // голова: чуть ниже верха хитбокса, не ниже центра чтобы не уйти в тело
+        double y = Math.max(box.maxY - 0.15, (box.minY + box.maxY) * 0.5);
+        return new Vec3d(cx, y, cz);
+    }
+
+    private static Vec3d selectBestPoint(Entity entity) {
+        return headPoint(entity);
     }
 
     private static float[] calculateAngles(Vec3d targetVec) {
@@ -154,10 +162,8 @@ public final class RotationUtil {
     public static boolean isLookingAt(Entity entity, float maxAngle) {
         if (entity == null || mc.player == null) return false;
 
-        // Проверяем против зафиксированной точки, а не пересчитываем заново
-        Vec3d checkPoint = (entity == lockedTarget && lockedAimPoint != null)
-                ? lockedAimPoint
-                : entity.getEyePos();
+        // Проверяем против головы — той же точки, куда считает getRotations
+        Vec3d checkPoint = headPoint(entity);
 
         float[] needed = calculateAngles(checkPoint);
         float deltaYaw = Math.abs(MathHelper.wrapDegrees(targetYaw - needed[0]));
