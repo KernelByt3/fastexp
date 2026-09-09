@@ -23,13 +23,16 @@ import org.lwjgl.glfw.GLFW;
 public class NeuroAura extends Module {
     private final BooleanSetting neuro = new BooleanSetting("Нейро", true);
     private final SliderSetting range = new SliderSetting("Радиус", 2.8, 4.5, 0.1, 3.2);
+    private final BooleanSetting onlyCrits = new BooleanSetting("Только криты", true);
     private final BooleanSetting autoTrain = new BooleanSetting("Авто-дообучение", false);
 
     private LivingEntity target;
+    private long aimLockMs = 0;
+    private float lastDeltaYaw, lastDeltaPitch, lastDist;
 
     public NeuroAura() {
         super("NeuroAura", "Нейро-аура обучаемая", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(neuro, range, autoTrain);
+        addSettings(neuro, range, onlyCrits, autoTrain);
     }
 
     @Override
@@ -55,6 +58,7 @@ public class NeuroAura extends Module {
         if (System.currentTimeMillis() - exp.nefor.client.module.impl.movement.WindHop.lastWindMs < 900) return;
 
         double maxReach = Math.min(range.getValue(), 3.0);
+        LivingEntity prev = target;
         if (target != null && target.isAlive() && !target.isRemoved()
                 && player.distanceTo(target) <= range.getValue() + 1.0
                 && RaycastUtil.canHit(player, target, range.getValue() + 0.5)) {
@@ -67,6 +71,7 @@ public class NeuroAura extends Module {
             RotationUtil.reset();
             return;
         }
+        if (target != prev) aimLockMs = System.currentTimeMillis();
 
         // Углы до стабильной точки (грудь) — без рандомного джиттера:
         // случайное смещение каждый тик давало тряску и срывало isLookingAt.
@@ -76,13 +81,15 @@ public class NeuroAura extends Module {
         float deltaYaw = MathHelper.wrapDegrees(ang[0] - baseYaw);
         float deltaPitch = ang[1] - basePitch;
         float dist = (float) player.distanceTo(target);
+        lastDeltaYaw = deltaYaw;
+        lastDeltaPitch = deltaPitch;
+        lastDist = dist;
 
         float factor;
         if (neuro.getValue() && NeuroDataset.size() >= 1) {
-            factor = MathHelper.clamp(NeuroModel.get().predict(deltaYaw, deltaPitch, dist), 0.10f, 0.35f);
-            if (autoTrain.getValue() && player.age % 60 == 0) NeuroModel.get().train(1);
+            factor = MathHelper.clamp(NeuroModel.get().predict(deltaYaw, deltaPitch, dist), 0.16f, 0.38f);
         } else {
-            factor = 0.24f;
+            factor = 0.26f;
         }
 
         SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
@@ -105,6 +112,8 @@ public class NeuroAura extends Module {
         if (!RaycastUtil.isAimingAt(player, atkYaw, atkPitch, target, maxReach)) return;
 
         if (player.getAttackCooldownProgress(0) < 0.995f) return;
+        // криты как в KillAura: бьём только в падении, иначе урон режется
+        if (onlyCrits.getValue() && !canCrit(player)) return;
 
         float ry = player.getYaw(), rp = player.getPitch();
         player.setYaw(atkYaw);
@@ -115,6 +124,19 @@ public class NeuroAura extends Module {
         player.swingHand(Hand.MAIN_HAND);
         player.setYaw(ry);
         player.setPitch(rp);
+
+        // обучение в реальном бою: каким доворотом попали и за сколько
+        if (autoTrain.getValue()) {
+            long reaction = MathHelper.clamp(System.currentTimeMillis() - aimLockMs, 30, 1500);
+            NeuroDataset.add(new NeuroDataset.Sample(lastDeltaYaw, lastDeltaPitch, lastDist, lastDist, reaction, true));
+            if (player.age % 60 == 0) NeuroModel.get().train(2);
+        }
+    }
+
+    private boolean canCrit(ClientPlayerEntity player) {
+        if (player.isOnGround()) return false;
+        if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return false;
+        return player.fallDistance > 0.0F && !player.isSprinting();
     }
 
     private LivingEntity findTarget(ClientPlayerEntity p, double r) {

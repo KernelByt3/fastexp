@@ -121,13 +121,23 @@ public class WindHop extends Module {
                     timer = now;
                 }
             }
-            // Держим доворот, затем бросок. Никаких ручных Look-пакетов —
-            // лишний PlayerMoveC2SPacket.LookAndOnGround в том же тике и флагит
-            // Grim TickTimer (flying/end) + BadPacketsJ. Silent-ротация через
-            // миксин уже подменяет yaw/pitch в обычных пакетах движения.
+            // Держим доворот, затем бросок — СТРОГО по готовности.
+            // Бросок мимо доворота = заряд летит не вниз + паливо ротации,
+            // поэтому без aimReady только ждём, а по таймауту — отмена без броска.
+            // Никаких ручных Look-пакетов — лишний PlayerMoveC2SPacket.LookAndOnGround
+            // в том же тике и флагит Grim TickTimer (flying/end) + BadPacketsJ.
+            // Silent-ротация через миксин уже подменяет yaw/pitch в обычных пакетах движения.
             case 2 -> {
                 aimDown(player);
-                if (!aimReady() && now - timer < AIM_TIMEOUT_MS) break;
+                if (!aimReady()) {
+                    if (now - timer > 1200) {
+                        restoreSlot(player);
+                        SmoothRotationManager.reset();
+                        RotationUtil.reset();
+                        stop();
+                    }
+                    break;
+                }
                 client.interactionManager.interactItem(player, Hand.MAIN_HAND);
                 player.swingHand(Hand.MAIN_HAND);
                 stage = 3;
@@ -138,15 +148,7 @@ public class WindHop extends Module {
                     aimDown(player);
                     break;
                 }
-                if (windSlot >= 9) {
-                    if (player.getVelocity().horizontalLength() > 0.08) {
-                        timer = now - 110;
-                        break;
-                    }
-                    moveToHand(player, windSlot);
-                } else if (prevSlot != -1 && prevSlot != windSlot) {
-                    player.getInventory().setSelectedSlot(prevSlot);
-                }
+                restoreSlot(player);
                 lastWindMs = System.currentTimeMillis();
                 SmoothRotationManager.reset();
                 RotationUtil.reset();
@@ -173,6 +175,15 @@ public class WindHop extends Module {
         ScreenHandler sh = player.playerScreenHandler;
         int screenSlot = invSlot < 9 ? 36 + invSlot : invSlot;
         im.clickSlot(sh.syncId, screenSlot, player.getInventory().getSelectedSlot(), SlotActionType.SWAP, player);
+    }
+
+    /** Возврат слота после броска/отмены. */
+    private void restoreSlot(ClientPlayerEntity player) {
+        if (windSlot >= 9) {
+            moveToHand(player, windSlot);
+        } else if (prevSlot != -1 && prevSlot != windSlot) {
+            player.getInventory().setSelectedSlot(prevSlot);
+        }
     }
 
     private void stop() {

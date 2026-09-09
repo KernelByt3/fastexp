@@ -128,7 +128,7 @@ public final class SmoothRotationManager {
             // FPS-плавный: easeOutCubic + dt
             factorYaw = (1f - (float)Math.pow(1f - base, fpsFactor * 1.6f));
             factorPitch = (1f - (float)Math.pow(1f - base*0.62f, fpsFactor * 1.6f));
-            maxYaw = 18f; maxPitch = 9f;
+            maxYaw = 26f; maxPitch = 14f;
         } else {
             float s = profile.smoothing;
             float baseYaw = MathHelper.clamp(s * 0.62f, 0.08f, 0.20f);

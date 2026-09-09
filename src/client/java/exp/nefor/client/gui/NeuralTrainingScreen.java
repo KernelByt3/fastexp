@@ -71,7 +71,10 @@ public class NeuralTrainingScreen extends NeforScreen {
             status = "Hit " + react + "ms";
             lastHitMs = System.currentTimeMillis();
             if (NeuroDataset.size() % 3 == 0) NeuroModel.get().train(5);
-            if (hits >= totalQuests) quest = totalQuests + 1;
+            if (hits >= totalQuests) {
+                quest = totalQuests + 1;
+                NeuroDataset.forceSave();
+            }
             else spawnTarget();
         }
 
@@ -119,6 +122,7 @@ public class NeuralTrainingScreen extends NeforScreen {
 
     @Override
     public void close() {
+        NeuroDataset.forceSave();
         if (client != null) client.setScreen(new NeforTitleScreen());
     }
 }

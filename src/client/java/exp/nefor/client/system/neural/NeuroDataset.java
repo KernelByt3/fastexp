@@ -19,13 +19,26 @@ public final class NeuroDataset {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("nefor").resolve("neural_dataset.json");
     private static final List<Sample> SAMPLES = new ArrayList<>();
+    private static final int MAX_SAMPLES = 2000;
+    private static long lastSaveMs = 0;
 
-    public static void add(Sample s){ SAMPLES.add(s); save(); }
+    public static void add(Sample s) {
+        SAMPLES.add(s);
+        while (SAMPLES.size() > MAX_SAMPLES) SAMPLES.remove(0);
+        save();
+    }
     public static List<Sample> all(){ return List.copyOf(SAMPLES); }
     public static int size(){ return SAMPLES.size(); }
-    public static void clear(){ SAMPLES.clear(); save(); }
+    public static void clear(){ SAMPLES.clear(); forceSave(); }
 
-    public static void save(){
+    public static void save() {
+        // троттлинг записи: тренировка сыпет сэмплами каждый тик
+        if (System.currentTimeMillis() - lastSaveMs < 2000) return;
+        forceSave();
+    }
+
+    public static void forceSave() {
+        lastSaveMs = System.currentTimeMillis();
         try{ Files.createDirectories(PATH.getParent()); Files.writeString(PATH, GSON.toJson(SAMPLES)); }catch(Exception ignored){}
     }
     public static void load(){
