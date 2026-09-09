@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "neforclient",
+	"version": "${version}",
+	"name": "Nefor",
+	"description": "Nefor for 1.21.11 fabric",
+	"authors": [
+		"KernelByte"
+	],
+	"contact": {
+		"homepage": "https://t.me/Java_1v"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/neforclient/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"exp.nefor.Nefor"
+		],
+		"client": [
+			"exp.nefor.client.NeforClient"
+		]
+	},
+	"mixins": [
+		"neforclient.mixins.json",
+		{
+			"config": "neforclient.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

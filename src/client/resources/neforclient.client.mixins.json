@@ -1,0 +1,24 @@
+{
+	"required": true,
+	"package": "exp.nefor.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"MinecraftClientMixin",
+		"MinecraftClientAccessor",
+		"LivingEntityAccessor",
+		"KeyboardMixin",
+		"ClientPlayerEntityMixin",
+		"ChatScreenMixin",
+		"LivingEntityRendererMixin",
+		"EntityMovementMixin",
+		"LivingEntitySlowMixin",
+		"LivingEntityJumpMixin",
+		"NoRenderMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
