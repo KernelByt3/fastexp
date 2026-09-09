@@ -99,10 +99,10 @@ public class NeuroAura extends Module {
         SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
 
         // === ЛОГИКА АТАКИ ===
-        if (player.distanceTo(target) > maxReach + 0.5) return;
+        if (player.distanceTo(target) > maxReach + 0.3) return;
         double eyeDist = player.getEyePos().distanceTo(
                 RaycastUtil.closestPoint(target.getBoundingBox(), player.getEyePos()));
-        if (eyeDist > maxReach + 0.05) return;
+        if (eyeDist > maxReach) return;
 
         boolean moving = player.getVelocity().horizontalLength() > 0.08
                 || mc.options.forwardKey.isPressed() || mc.options.leftKey.isPressed()
@@ -149,7 +149,7 @@ public class NeuroAura extends Module {
     private LivingEntity findTarget(ClientPlayerEntity p, double r) {
         double maxRange = Math.min(r, 3.0);
         LivingEntity best = null;
-        double bd = maxRange + 0.05;
+        double bd = maxRange;
         var world = MinecraftClient.getInstance().world;
         if (world == null) return null;
         for (var e : world.getEntities()) {
@@ -162,7 +162,7 @@ public class NeuroAura extends Module {
             if (l.getType().toString().contains("ArmorStand")) continue;
             if (!RaycastUtil.canHit(p, l, maxRange + 0.3)) continue;
             double d = p.getEyePos().distanceTo(RaycastUtil.closestPoint(l.getBoundingBox(), p.getEyePos()));
-            if (d > maxRange + 0.05) continue;
+            if (d > maxRange) continue;
             if (d < bd) { best = l; bd = d; }
         }
         return best;

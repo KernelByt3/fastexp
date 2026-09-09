@@ -131,13 +131,12 @@ public final class SmoothRotationManager {
         dt = MathHelper.clamp(dt, 0.005f, 0.05f); // 5-50ms
         float fpsFactor = dt * 20f; // нормируем к 20 TPS
 
-        float gcd = profile.gcdSnap ? GcdUtil.getGcd() : 0f;
-        // плавный отворот — свой Mathematics чтобы не AimModulo360
+        // GCD всегда: камера в ванилле двигается только кратно GCD,
+        // иначе Grim AimModulo360. Чистый снап без шума (Mathematics.gcdSnap
+        // подмешивает рандом и рвёт сетку — не использовать здесь).
+        float gcd = GcdUtil.getGcd();
         float rawDeltaYaw = MathHelper.wrapDegrees(targetYaw - currentYaw);
-        float deltaYaw = Mathematics.wrapDegrees(Mathematics.turnSmooth(currentYaw, targetYaw, 28f) - currentYaw);
-        // если большой отворот, используем turnSmooth delta, иначе raw
-        if(Math.abs(rawDeltaYaw) > 90f) deltaYaw = Mathematics.wrapDegrees(Mathematics.turnSmooth(currentYaw, targetYaw, 28f) - currentYaw);
-        else deltaYaw = rawDeltaYaw;
+        float deltaYaw = rawDeltaYaw;
         float deltaPitch = targetPitch - currentPitch;
         if (Math.abs(deltaYaw) < 0.2f && Math.abs(deltaPitch) < 0.2f) {
             if (returning) { reset(); return; } // взгляд вернулся к камере
@@ -173,8 +172,8 @@ public final class SmoothRotationManager {
         float nextYaw = currentYaw + stepYaw;
         float nextPitch = MathHelper.clamp(currentPitch + stepPitch, -90f, 90f);
         if (gcd > 0.0001f) {
-            nextYaw = Mathematics.gcdSnap(currentYaw, nextYaw, gcd);
-            nextPitch = Mathematics.gcdSnap(currentPitch, nextPitch, gcd);
+            nextYaw = GcdUtil.snapAngle(currentYaw, nextYaw, gcd);
+            nextPitch = GcdUtil.snapAngle(currentPitch, nextPitch, gcd);
         }
         currentYaw = nextYaw;
         currentPitch = nextPitch;

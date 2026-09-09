@@ -17,6 +17,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -137,10 +138,10 @@ public class KillAura extends Module {
         }
 
         // === ЛОГИКА АТАКИ ===
-        // Reach фикс: дистанция от глаз + строгий 3.0
+        // Reach строго 3.0 без слабины: Grim Hitboxes флагит удары на грани
         double eyeDist = player.getEyePos().distanceTo(target.getEyePos());
-        if (eyeDist > maxReach + 0.05) return;
-        if (player.distanceTo(target) > maxReach + 0.5) return;
+        if (eyeDist > maxReach) return;
+        if (player.distanceTo(target) > maxReach + 0.3) return;
 
         boolean moving = player.getVelocity().horizontalLength() > 0.08 || client.options.forwardKey.isPressed() || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
         float aimFov = moving ? 24f : currentProfile().fovCheck;
@@ -212,8 +213,7 @@ public class KillAura extends Module {
     private LivingEntity findTarget(ClientPlayerEntity player, ClientWorld world, double maxRange) {
         maxRange = Math.min(maxRange, 3.0);
         LivingEntity best = null;
-        double bestScore = Double.MAX_VALUE;
-        for (var entity : world.getEntities()) {
+        double bestScore = Double.MAX_VALUE;        for (var entity : world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (entity == player || !living.isAlive() || living.isRemoved()) continue;
             if (entity instanceof net.minecraft.entity.player.PlayerEntity pe && exp.nefor.client.system.FriendManager.isFriend(pe.getName().getString())) continue;
@@ -221,7 +221,7 @@ public class KillAura extends Module {
             if (living.hurtTime>0) continue;
             if (!throughWalls.getValue() && !exp.nefor.client.util.RaycastUtil.canHit(player, living, maxRange+0.3)) continue;
             double eyeDist = player.getEyePos().distanceTo(exp.nefor.client.util.RaycastUtil.closestPoint(living.getBoundingBox(), player.getEyePos()));
-            if (eyeDist > maxRange + 0.05) continue;
+            if (eyeDist > maxRange) continue;
             double score;
             String mode = targetMode.getValue();
             if ("Здоровье".equals(mode)) score = living.getHealth() * 10 + eyeDist;
