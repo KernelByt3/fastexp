@@ -40,4 +40,21 @@ public final class RaycastUtil {
                 Math.clamp(eye.z, box.minZ, box.maxZ)
         );
     }
+
+    /**
+     * Строгая проверка: луч от глаз вдоль указанной ротации должен пересекать
+     * хитбокс цели в пределах дистанции. Только тогда удар легитимен для античита.
+     */
+    public static boolean isAimingAt(LivingEntity from, float yaw, float pitch, LivingEntity to, double maxRange) {
+        Vec3d eye = from.getEyePos();
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        Vec3d dir = new Vec3d(
+                -Math.sin(yawRad) * Math.cos(pitchRad),
+                -Math.sin(pitchRad),
+                Math.cos(yawRad) * Math.cos(pitchRad)
+        );
+        Vec3d end = eye.add(dir.multiply(maxRange + 0.3));
+        return to.getBoundingBox().expand(0.1).raycast(eye, end).isPresent();
+    }
 }

@@ -1,18 +1,18 @@
 package exp.nefor.client.module.impl.combat;
 
-import exp.nefor.client.module.api.Module;
 import exp.nefor.client.module.api.Category;
+import exp.nefor.client.module.api.Module;
 import exp.nefor.client.module.api.setting.BooleanSetting;
 import exp.nefor.client.module.api.setting.SliderSetting;
 import exp.nefor.client.system.neural.NeuroDataset;
 import exp.nefor.client.system.neural.NeuroModel;
-import exp.nefor.client.system.rotation.GcdUtil;
-import exp.nefor.client.system.rotation.RotationProfile;
-import exp.nefor.client.system.rotation.ServerType;
 import exp.nefor.client.system.rotation.SmoothRotationManager;
+import exp.nefor.client.util.RaycastUtil;
 import exp.nefor.client.util.client.RotationUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
@@ -27,75 +27,117 @@ public class NeuroAura extends Module {
 
     private LivingEntity target;
 
-    public NeuroAura(){
+    public NeuroAura() {
         super("NeuroAura", "Нейро-аура обучаемая", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
         addSettings(neuro, range, autoTrain);
     }
 
-    @Override public void onTick(){
+    @Override
+    public void onDisable() {
+        super.onDisable();
+        target = null;
+        SmoothRotationManager.reset();
+        RotationUtil.reset();
+    }
+
+    @Override
+    public void onTick() {
         RotationUtil.onClientTick();
         SmoothRotationManager.tick();
         var mc = MinecraftClient.getInstance();
-        if(mc.player==null || mc.world==null) return;
-        if(target!=null && target.isAlive() && !target.isRemoved() && mc.player.distanceTo(target) <= range.getValue()+1.0 && exp.nefor.client.util.RaycastUtil.canHit(mc.player, target, range.getValue()+0.5)){
-        } else target = findTarget(mc.player, range.getValue());
-        if(target==null){ SmoothRotationManager.reset(); RotationUtil.reset(); return; }
+        if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        ClientPlayerEntity player = mc.player;
 
-        float[] ang = RotationUtil.getRotations(target);
-        float deltaYaw = MathHelper.wrapDegrees(ang[0] - mc.player.getYaw());
-        float deltaPitch = ang[1] - mc.player.getPitch();
-        float dist = (float)mc.player.distanceTo(target);
+        // пауза пока WindHop крутит свою ротацию + 900мс после ветра
+        var windHop = exp.nefor.client.module.ModuleManager.get(
+                exp.nefor.client.module.impl.movement.WindHop.class);
+        if (windHop != null && windHop.isActive()) return;
+        if (System.currentTimeMillis() - exp.nefor.client.module.impl.movement.WindHop.lastWindMs < 900) return;
 
-        float factor;
-        if(neuro.getValue() && NeuroDataset.size() >= 1){
-            factor = NeuroModel.get().predict(deltaYaw, deltaPitch, dist);
-            var samples = NeuroDataset.all();
-            if(!samples.isEmpty()){
-                var s = samples.get((int)(Math.random()*samples.size()));
-                deltaYaw += s.deltaYaw()*0.35f;
-                deltaPitch += s.deltaPitch()*0.35f;
-            }
-            if(autoTrain.getValue() && mc.player.age % 60 == 0) NeuroModel.get().train(1);
+        double maxReach = Math.min(range.getValue(), 3.0);
+        if (target != null && target.isAlive() && !target.isRemoved()
+                && player.distanceTo(target) <= range.getValue() + 1.0
+                && RaycastUtil.canHit(player, target, range.getValue() + 0.5)) {
+            // держим ту же цель
         } else {
-            factor = 0.24f; // дефолт без датасета — быстрее чтобы наводилось
+            target = findTarget(player, range.getValue());
+        }
+        if (target == null) {
+            SmoothRotationManager.reset();
+            RotationUtil.reset();
+            return;
         }
 
-        // напрямую к цели с нейро-фактором — без двойного сглаживания
-        float targetYaw = mc.player.getYaw() + deltaYaw;
-        float targetPitch = mc.player.getPitch() + deltaPitch;
-        SmoothRotationManager.setTargetWithFactor(targetYaw, targetPitch, factor);
+        // Углы до стабильной точки (грудь) — без рандомного джиттера:
+        // случайное смещение каждый тик давало тряску и срывало isLookingAt.
+        float[] ang = RotationUtil.getRotations(target);
+        float baseYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
+        float basePitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
+        float deltaYaw = MathHelper.wrapDegrees(ang[0] - baseYaw);
+        float deltaPitch = ang[1] - basePitch;
+        float dist = (float) player.distanceTo(target);
 
-        if(mc.player.distanceTo(target) > range.getValue()+0.3) return;
-        boolean movingN = mc.player.getVelocity().horizontalLength() > 0.08 || mc.options.forwardKey.isPressed() || mc.options.leftKey.isPressed();
-        float fovN = movingN ? 24f : 14f;
-        if(!RotationUtil.isLookingAt(target, fovN)) return;
-        if(mc.player.getAttackCooldownProgress(0) < 0.995f) return;
-        // атака
-        float ry = mc.player.getYaw(), rp = mc.player.getPitch();
-        mc.player.setYaw(SmoothRotationManager.getYaw());
-        mc.player.setPitch(SmoothRotationManager.getPitch());
-        mc.player.setSprinting(false);
+        float factor;
+        if (neuro.getValue() && NeuroDataset.size() >= 1) {
+            factor = MathHelper.clamp(NeuroModel.get().predict(deltaYaw, deltaPitch, dist), 0.10f, 0.35f);
+            if (autoTrain.getValue() && player.age % 60 == 0) NeuroModel.get().train(1);
+        } else {
+            factor = 0.24f;
+        }
+
+        SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
+
+        // === ЛОГИКА АТАКИ ===
+        if (player.distanceTo(target) > maxReach + 0.5) return;
+        double eyeDist = player.getEyePos().distanceTo(
+                RaycastUtil.closestPoint(target.getBoundingBox(), player.getEyePos()));
+        if (eyeDist > maxReach + 0.05) return;
+
+        boolean moving = player.getVelocity().horizontalLength() > 0.08
+                || mc.options.forwardKey.isPressed() || mc.options.leftKey.isPressed()
+                || mc.options.rightKey.isPressed();
+        if (!RotationUtil.isLookingAt(target, moving ? 10f : 6f)) return;
+
+        // Строгая проверка хитбокса: луч вдоль silent-ротации обязан пересекать
+        // бокс цели — иначе удар мимо и паливо для античита.
+        float atkYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
+        float atkPitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
+        if (!RaycastUtil.isAimingAt(player, atkYaw, atkPitch, target, maxReach)) return;
+
+        if (player.getAttackCooldownProgress(0) < 0.995f) return;
+
+        float ry = player.getYaw(), rp = player.getPitch();
+        player.setYaw(atkYaw);
+        player.setPitch(atkPitch);
+        player.setSprinting(false);
         mc.options.sprintKey.setPressed(false);
-        mc.interactionManager.attackEntity(mc.player, target);
-        mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
-        mc.player.setYaw(ry); mc.player.setPitch(rp);
+        mc.interactionManager.attackEntity(player, target);
+        player.swingHand(Hand.MAIN_HAND);
+        player.setYaw(ry);
+        player.setPitch(rp);
     }
 
-    private LivingEntity findTarget(net.minecraft.client.network.ClientPlayerEntity p, double r){
-        LivingEntity best=null; double bd=r+0.5;
-        var world = net.minecraft.client.MinecraftClient.getInstance().world;
-        if(world==null) return null;
-        for(var e: world.getEntities()){
-            if(!(e instanceof LivingEntity l)) continue;
-            if(e==p || !l.isAlive() || l.isRemoved()) continue;
-            if(l.getType().toString().contains("ArmorStand")) continue;
-            if(l.hurtTime>0) continue;
-            if (!exp.nefor.client.util.RaycastUtil.canHit(p, l, r+0.3)) continue;
-            double d=p.getEyePos().distanceTo(exp.nefor.client.util.RaycastUtil.closestPoint(l.getBoundingBox(), p.getEyePos()));
-            if(d > r+0.05) continue;
-            if(d<=bd){ best=l; bd=d; }
+    private LivingEntity findTarget(ClientPlayerEntity p, double r) {
+        double maxRange = Math.min(r, 3.0);
+        LivingEntity best = null;
+        double bd = maxRange + 0.05;
+        var world = MinecraftClient.getInstance().world;
+        if (world == null) return null;
+        for (var e : world.getEntities()) {
+            if (!(e instanceof LivingEntity l)) continue;
+            if (e == p || !l.isAlive() || l.isRemoved()) continue;
+            if (e instanceof net.minecraft.entity.player.PlayerEntity pe
+                    && exp.nefor.client.system.FriendManager.isFriend(pe.getName().getString())) continue;
+            if (l instanceof net.minecraft.entity.player.PlayerEntity pe2 && pe2.isCreative()) continue;
+            if (l.hurtTime > 0) continue;
+            if (l.getType().toString().contains("ArmorStand")) continue;
+            if (!RaycastUtil.canHit(p, l, maxRange + 0.3)) continue;
+            double d = p.getEyePos().distanceTo(RaycastUtil.closestPoint(l.getBoundingBox(), p.getEyePos()));
+            if (d > maxRange + 0.05) continue;
+            if (d < bd) { best = l; bd = d; }
         }
         return best;
     }
-    public LivingEntity getTarget(){ return target; }
+
+    public LivingEntity getTarget() { return target; }
 }
