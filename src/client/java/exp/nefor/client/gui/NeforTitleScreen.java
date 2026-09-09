@@ -1,6 +1,5 @@
 package exp.nefor.client.gui;
 
-import exp.nefor.client.render.RenderSystem;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -25,14 +24,16 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
 
     private List<Button> buttons() {
         List<Button> list = new ArrayList<>();
-        int centerX = this.width / 2 - 100;
-        int y = this.height / 2 - 60;
-        list.add(new Button("Одиночная игра", centerX, y, 200, 24, false, () -> this.client.setScreen(new SelectWorldScreen(this))));
-        list.add(new Button("Сетевая игра", centerX, y + 28, 200, 24, false, () -> this.client.setScreen(new MultiplayerScreen(this))));
-        list.add(new Button("Alt Manager", centerX, y + 56, 200, 24, false, () -> this.client.setScreen(new AltsManagerScreen(this))));
-        list.add(new Button("Нейро Тренировка  [AI]", centerX, y + 84, 200, 24, false, () -> this.client.setScreen(new NeuralTrainingScreen())));
-        list.add(new Button("Настройки", centerX, y + 112, 98, 24, false, () -> this.client.setScreen(new OptionsScreen(this, this.client.options))));
-        list.add(new Button("Выход", centerX + 102, y + 112, 98, 24, true, this.client::scheduleStop));
+        int w = 180;
+        int centerX = this.width / 2 - w / 2;
+        int y = this.height / 2 - 44;
+        int gap = 26;
+        list.add(new Button("Singleplayer", centerX, y, w, 22, false, () -> this.client.setScreen(new SelectWorldScreen(this))));
+        list.add(new Button("Multiplayer", centerX, y + gap, w, 22, false, () -> this.client.setScreen(new MultiplayerScreen(this))));
+        list.add(new Button("Alts", centerX, y + gap * 2, w, 22, false, () -> this.client.setScreen(new AltsManagerScreen(this))));
+        list.add(new Button("Neural Training", centerX, y + gap * 3, w, 22, false, () -> this.client.setScreen(new NeuralTrainingScreen())));
+        list.add(new Button("Settings", centerX, y + gap * 4, (w - 4) / 2, 22, false, () -> this.client.setScreen(new OptionsScreen(this, this.client.options))));
+        list.add(new Button("Quit", centerX + (w + 4) / 2, y + gap * 4, (w - 4) / 2, 22, true, this.client::scheduleStop));
         return list;
     }
 
@@ -46,32 +47,28 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
-        SakuraBackground.draw(System.currentTimeMillis());
-        UiRender.dimScreen(this.width, this.height, 0.35f);
+        UiRender.dimScreen(this.width, this.height, 0.55f);
+
+        float titleSize = 26.0f;
+        float titleWidth = exp.nefor.client.render.RenderSystem.textWidth("nefor", titleSize);
+        float titleX = this.width / 2.0f - titleWidth / 2.0f;
+        float titleY = this.height / 2.0f - 100.0f;
+        exp.nefor.client.render.RenderSystem.drawText("nefor", titleX, titleY, titleSize, 0xFFFFFFFF);
+
+        String sub = "fabric 1.21.11";
+        exp.nefor.client.render.RenderSystem.drawText(sub,
+                this.width / 2.0f - exp.nefor.client.render.RenderSystem.textWidth(sub, 11.0f) / 2.0f,
+                titleY + 30.0f, 11.0f, 0xFF9A9AA5);
 
         for (Button button : buttons()) {
             boolean hovered = UiRender.inBox(mouseX, mouseY, button.x(), button.y(), button.w(), button.h());
             UiRender.button(button.x(), button.y(), button.w(), button.h(), button.label(), hovered, button.danger());
         }
 
-        float titleSize = 30.0f;
-        float titleWidth = RenderSystem.textWidth("NEFOR", titleSize)
-                + 8.0f + RenderSystem.textWidth("CLIENT", titleSize);
-        float titleX = this.width / 2.0f - titleWidth / 2.0f;
-        float titleY = this.height / 4.0f - 20.0f;
-        RenderSystem.drawText("NEFOR", titleX, titleY, titleSize, 0xFFC9A6FF);
-        RenderSystem.drawText("CLIENT", titleX + RenderSystem.textWidth("NEFOR", titleSize) + 8.0f,
-                titleY, titleSize, 0xFFFFFFFF);
-
-        String owner = "Owner: Java_1v  •  NeuroAura epochs: " + exp.nefor.client.system.neural.NeuroModel.get().epochsTrained + "  dataset: " + exp.nefor.client.system.neural.NeuroDataset.size();
-        RenderSystem.drawText(owner, 10.0f, this.height - 16.0f, 10.0f, 0xFFC9A6FF);
-
-        String hint = "Right Shift — ClickGui  |  Neuro Training — обучи ауру под себя";
-        RenderSystem.drawText(hint, this.width / 2.0f - RenderSystem.textWidth(hint, 10.0f) / 2.0f,
-                this.height - 24.0f, 10.0f, 0xFFFFFFFF);
-        // неоновая полоска
-        float pulse = 0.6f + 0.4f * (float)Math.sin(System.currentTimeMillis()*0.004);
-        UiRender.roundRect(this.width/2f - 80, this.height/4f + 28, 160, 2, 1, new float[]{0.36f,0.49f,1f,0.7f*pulse}, new float[]{0,0,0,0},0, new float[]{0.36f,0.49f,1f,0.3f},4);
+        String hint = "Right Shift — menu";
+        exp.nefor.client.render.RenderSystem.drawText(hint,
+                this.width / 2.0f - exp.nefor.client.render.RenderSystem.textWidth(hint, 10.0f) / 2.0f,
+                this.height - 20.0f, 10.0f, 0xFF6E6E78);
     }
 
     @Override
@@ -90,16 +87,6 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
         super.mouseMoved(mouseX, mouseY);
-    }
-
-    protected double scaledMouseX() {
-        float scale = (float) this.client.getWindow().getScaleFactor();
-        return this.client.mouse.getX() / scale;
-    }
-
-    protected double scaledMouseY() {
-        float scale = (float) this.client.getWindow().getScaleFactor();
-        return this.client.mouse.getY() / scale;
     }
 
     @Override
