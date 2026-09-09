@@ -73,6 +73,13 @@ public class NeuroAura extends Module {
         }
         if (target != prev) aimLockMs = System.currentTimeMillis();
 
+        // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
+        // иначе сервер видит спринт и криты не проходят
+        if (player.distanceTo(target) <= maxReach + 0.5) {
+            player.setSprinting(false);
+            mc.options.sprintKey.setPressed(false);
+        }
+
         float[] ang = RotationUtil.getRotations(target);
         float baseYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
         float basePitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();

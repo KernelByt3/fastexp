@@ -45,6 +45,9 @@ public class ModuleManager {
     public static void init() {
         if (!MODULES.isEmpty()) return;
 
+        // AutoSprint первым: ауры ниже гасят спринт пока цель в радиусе (крит),
+        // иначе спринт включался бы обратно после сброса аурой в том же тике
+        register(new AutoSprint());
         register(new AutoSell());
         register(new AntiAfk());
         register(new KillAura());
@@ -55,7 +58,6 @@ public class ModuleManager {
         register(new NoRender());
         register(new NoWeather());
         register(new Hud());
-        register(new AutoSprint());
         register(new WindHop());
 
         EventBus.subscribe(INSTANCE);

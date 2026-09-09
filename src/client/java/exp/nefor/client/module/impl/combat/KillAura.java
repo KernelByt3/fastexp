@@ -108,6 +108,14 @@ public class KillAura extends Module {
         }
 
         RotationProfile profile = currentProfile();
+
+        // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
+        // иначе сервер видит спринт и криты не проходят (кроме KeepSprint)
+        double maxReach = Math.min(range.getValue(), 3.0);
+        if (!keepSprint.getValue() && player.distanceTo(target) <= maxReach + 0.5) {
+            player.setSprinting(false);
+            client.options.sprintKey.setPressed(false);
+        }
         // Нейро: если обучено 5+ минут (dataset 80+ и 60+ epochs) — наводится твоими движениями мыши
         if(neuroLearn.getValue() && exp.nefor.client.system.neural.NeuroDataset.size() >= 80 && exp.nefor.client.system.neural.NeuroModel.get().epochsTrained >= 15){
             float[] ang = RotationUtil.getRotations(target);
@@ -138,7 +146,6 @@ public class KillAura extends Module {
         // === ЛОГИКА АТАКИ ===
         // Reach фикс: дистанция от глаз + строгий 3.0
         double eyeDist = player.getEyePos().distanceTo(target.getEyePos());
-        double maxReach = Math.min(range.getValue(), 3.0);
         if (eyeDist > maxReach + 0.05) return;
         if (player.distanceTo(target) > maxReach + 0.5) return;
 

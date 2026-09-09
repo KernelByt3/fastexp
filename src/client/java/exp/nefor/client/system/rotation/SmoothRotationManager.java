@@ -139,9 +139,9 @@ public final class SmoothRotationManager {
                 case HYPIXEL -> 8f;
                 case REALLY_WORLD -> 10f;
                 case FUN_TIME -> 11f;
-                default -> 9f;
+                default -> 14f;
             };
-            maxPitch = 4.2f;
+            maxPitch = 8f;
         }
         float stepYaw = MathHelper.clamp(deltaYaw * factorYaw, -maxYaw, maxYaw);
         float stepPitch = MathHelper.clamp(deltaPitch * factorPitch, -maxPitch, maxPitch);

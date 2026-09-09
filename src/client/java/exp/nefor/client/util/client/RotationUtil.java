@@ -109,14 +109,14 @@ public final class RotationUtil {
         lockedAimPoint = headPoint(entity);
         lockedTarget = entity;
 
-        // EMA-сглаживание углов: резкие скачки (прыжок цели, смена тика) гасятся,
-        // прицел ползёт к голове плавно. Скорость ротации не трогаем.
+        // EMA-сглаживание ТОЛЬКО pitch: yaw идёт сырым чтобы доворот
+        // успевал за стрейфом цели, а вертикаль ползёт к голове плавно.
         if (entity != smoothTarget) {
             smoothTarget = entity;
             smoothYaw = raw[0];
             smoothPitch = raw[1];
         } else {
-            smoothYaw += MathHelper.wrapDegrees(raw[0] - smoothYaw) * AIM_SMOOTH;
+            smoothYaw = raw[0];
             smoothPitch += (raw[1] - smoothPitch) * AIM_SMOOTH;
         }
         return new float[]{smoothYaw, MathHelper.clamp(smoothPitch, -90.0F, 90.0F)};
