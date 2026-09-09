@@ -168,7 +168,16 @@ public class KillAura extends Module {
             // фиксит "бьёт без КД до крита": если onlyCrits вкл — ждём полный КД 0.995 и падение
             if (onlyCrits.getValue()) {
                 if (cd < 0.995f) return;
-                if (!canCrit(player)) return;
+                if (attackedThisJump) return;
+                if (player.isOnGround()) return;
+                if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return;
+                if (player.fallDistance <= 0.0F) return;
+                if (player.isSprinting()) {
+                    // sprint-reset: сервер считает крит по состоянию на момент удара,
+                    // поэтому спринт гасим прямо перед атакой вместо отказа от неё
+                    player.setSprinting(false);
+                    client.options.sprintKey.setPressed(false);
+                }
             } else {
                 if (cd < 0.90f) return;
             }
@@ -196,7 +205,8 @@ public class KillAura extends Module {
         if (attackedThisJump) return false;
         if (player.isOnGround()) return false;
         if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return false;
-        return player.fallDistance > 0.0F && !player.isSprinting();
+        // спринт больше не блокирует: гасится sprint-reset перед ударом
+        return player.fallDistance > 0.0F;
     }
 
     private LivingEntity findTarget(ClientPlayerEntity player, ClientWorld world, double maxRange) {

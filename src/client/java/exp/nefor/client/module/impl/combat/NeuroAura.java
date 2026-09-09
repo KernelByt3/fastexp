@@ -73,8 +73,6 @@ public class NeuroAura extends Module {
         }
         if (target != prev) aimLockMs = System.currentTimeMillis();
 
-        // Углы до стабильной точки (грудь) — без рандомного джиттера:
-        // случайное смещение каждый тик давало тряску и срывало isLookingAt.
         float[] ang = RotationUtil.getRotations(target);
         float baseYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
         float basePitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
@@ -112,8 +110,17 @@ public class NeuroAura extends Module {
         if (!RaycastUtil.isAimingAt(player, atkYaw, atkPitch, target, maxReach)) return;
 
         if (player.getAttackCooldownProgress(0) < 0.995f) return;
-        // криты как в KillAura: бьём только в падении, иначе урон режется
-        if (onlyCrits.getValue() && !canCrit(player)) return;
+        // криты как в KillAura: бьём только в падении, иначе урон режется.
+        // спринт гасим sprint-reset перед ударом, а не отказом от него
+        if (onlyCrits.getValue()) {
+            if (player.isOnGround()) return;
+            if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return;
+            if (player.fallDistance <= 0.0F) return;
+            if (player.isSprinting()) {
+                player.setSprinting(false);
+                mc.options.sprintKey.setPressed(false);
+            }
+        }
 
         float ry = player.getYaw(), rp = player.getPitch();
         player.setYaw(atkYaw);
@@ -131,12 +138,6 @@ public class NeuroAura extends Module {
             NeuroDataset.add(new NeuroDataset.Sample(lastDeltaYaw, lastDeltaPitch, lastDist, lastDist, reaction, true));
             if (player.age % 60 == 0) NeuroModel.get().train(2);
         }
-    }
-
-    private boolean canCrit(ClientPlayerEntity player) {
-        if (player.isOnGround()) return false;
-        if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return false;
-        return player.fallDistance > 0.0F && !player.isSprinting();
     }
 
     private LivingEntity findTarget(ClientPlayerEntity p, double r) {
