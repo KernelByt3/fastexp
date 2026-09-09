@@ -4,6 +4,7 @@ import exp.nefor.client.module.api.Category;
 import exp.nefor.client.module.api.Module;
 import exp.nefor.client.module.api.setting.KeybindSetting;
 import exp.nefor.client.render.RenderSystem;
+import exp.nefor.client.system.rotation.RotationProfile;
 import exp.nefor.client.system.rotation.SmoothRotationManager;
 import exp.nefor.client.util.Color;
 import exp.nefor.client.util.client.MultiActionsBypass;
@@ -21,8 +22,8 @@ import org.lwjgl.glfw.GLFW;
 public class WindHop extends Module {
 
     private static final float TARGET_PITCH = 89.0f;
-    /** Допуск silent-ротации перед броском — Grim прощает небольшие отклонения. */
-    private static final float AIM_TOLERANCE = 8.0f;
+    /** Допуск silent-ротации перед броском. */
+    private static final float AIM_TOLERANCE = 5.0f;
     private static final long AIM_TIMEOUT_MS = 600;
 
     private final KeybindSetting hop = new KeybindSetting("Бинд WindHop", this::startHop);
@@ -138,14 +139,19 @@ public class WindHop extends Module {
                     }
                     break;
                 }
-                // В 1.21+ пакет USE_ITEM везёт yaw/pitch, и Grim BadPacketsJ сверяет
-                // их с ротацией из тик-пакетов. Поэтому на момент броска камера
-                // выставляется в silent-поворот (вниз): и mismatch нет, и заряд
-                // летит строго под себя, а не по направлению камеры.
-                float silentYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
+                // В 1.21+ пакет USE_ITEM везёт yaw/pitch, и Grim BadPacketsJ требует
+                // ТОЧНОГО совпадения с ротацией следующего тик-пакета. Поэтому:
+                // 1) ротация замораживается (setInstant — дальше тики шлют те же значения),
+                // 2) в USE_ITEM кладутся те же замороженные значения через камеру.
+                // Доворот после броска не обновляем — иначе тик-пакеты разъедутся с USE_ITEM.
+                float frozenYaw = MathHelper.wrapDegrees(
+                        RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw());
+                float frozenPitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
+                SmoothRotationManager.setInstant(frozenYaw, frozenPitch, RotationProfile.VANILLA);
+                RotationUtil.setRotationRaw(frozenYaw, frozenPitch, false);
                 float ry = player.getYaw(), rp = player.getPitch();
-                player.setYaw(silentYaw);
-                player.setPitch(TARGET_PITCH);
+                player.setYaw(frozenYaw);
+                player.setPitch(frozenPitch);
                 client.interactionManager.interactItem(player, Hand.MAIN_HAND);
                 player.swingHand(Hand.MAIN_HAND);
                 player.setYaw(ry);
@@ -154,10 +160,8 @@ public class WindHop extends Module {
                 timer = now;
             }
             case 3 -> {
-                if (now - timer < 150) {
-                    aimDown(player);
-                    break;
-                }
+                // только ждём: замороженная ротация едет в тик-пакетах и совпадает с USE_ITEM
+                if (now - timer < 200) break;
                 restoreSlot(player);
                 lastWindMs = System.currentTimeMillis();
                 SmoothRotationManager.reset();
