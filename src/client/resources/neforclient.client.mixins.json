@@ -13,7 +13,9 @@
 		"EntityMovementMixin",
 		"LivingEntitySlowMixin",
 		"LivingEntityJumpMixin",
-		"NoRenderMixin"
+		"NoRenderMixin",
+		"ScreenBackgroundMixin",
+		"ConnectScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
