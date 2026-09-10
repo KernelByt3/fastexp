@@ -145,14 +145,18 @@ public final class RotationUtil {
     }
 
     private static Vec3d headPoint(Entity entity) {
-        return headPoint(entity.getBoundingBox());
+        return aimPoint(entity.getBoundingBox());
     }
 
     private static Vec3d headPoint(Box box) {
+        return aimPoint(box);
+    }
+
+    /** Пузо: 45% высоты — центр бокса, максимальный запас вверх/вниз. */
+    private static Vec3d aimPoint(Box box) {
         double cx = (box.minX + box.maxX) * 0.5;
         double cz = (box.minZ + box.maxZ) * 0.5;
-        
-        double y = Math.max(box.maxY - 0.15, (box.minY + box.maxY) * 0.5);
+        double y = box.minY + (box.maxY - box.minY) * 0.45;
         return new Vec3d(cx, y, cz);
     }
 
