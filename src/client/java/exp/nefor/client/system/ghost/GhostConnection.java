@@ -8,46 +8,56 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.handshake.ConnectionIntent;
 import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
 import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket;
+import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import net.minecraft.network.packet.c2s.play.ClientTickEndC2SPacket;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.TeleportConfirmC2SPacket;
 import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 
-import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.BitSet;
 import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Настоящий гость на сервере: отдельный TCP-коннект с ником.
- * Виден в табе и другим игрокам. Работает на серверах без авторизации
- * (online-mode отвечает "premium only").
+ * Настоящий гость на сервере: отдельный TCP-коннект с сессией,
+ * своё тело (GhostPlayer) и свой кусок мира (GhostWorld).
+ * Виден в табе и другим игрокам. Только серверы без авторизации.
  */
 public class GhostConnection {
 
-    public final String nick;
+    public final GhostSession session;
     public final String host;
     public final int port;
+
+    public final GhostPlayer player = new GhostPlayer(0, 64, 0);
+    public final GhostWorld world = new GhostWorld();
 
     public volatile String status = "connecting";
     public volatile boolean playReady = false;
     public volatile boolean dead = false;
-    public volatile float health = 20f;
 
     private ClientConnection conn;
     private boolean handshakeSent = false;
     private long connectMs;
     private long lastMoveMs = 0;
+    private double lastX, lastZ;
+    private long stuckMs = 0;
 
-    public double x, y, z;
-    public float yaw, pitch;
     public double tx, ty, tz;
     public boolean hasTarget = false;
 
-    public GhostConnection(String nick, String host, int port) {
-        this.nick = nick;
+    public GhostConnection(GhostSession session, String host, int port) {
+        this.session = session;
         this.host = host;
         this.port = port;
+    }
+
+    public String nick() {
+        return session.nick;
     }
 
     public void connect() {
@@ -88,6 +98,29 @@ public class GhostConnection {
         hasTarget = false;
     }
 
+    public void look(float yaw, float pitch) {
+        player.yaw = yaw;
+        player.pitch = pitch;
+    }
+
+    public void swing() {
+        send(new HandSwingC2SPacket(Hand.MAIN_HAND));
+    }
+
+    /** Чат от лица бота (без подписи — примут серверы без secure-chat). */
+    public void sendChat(String text) {
+        if (text == null || text.isBlank()) return;
+        try {
+            send(new ChatMessageC2SPacket(text,
+                    Instant.now(),
+                    ThreadLocalRandom.current().nextLong(),
+                    new net.minecraft.network.message.MessageSignatureData(new byte[0]),
+                    new net.minecraft.network.message.LastSeenMessageList.Acknowledgment(
+                            0, new BitSet(), net.minecraft.network.message.LastSeenMessageList.Acknowledgment.NO_CHECKSUM)));
+        } catch (Exception ignored) {
+        }
+    }
+
     /** Тик из модуля: handshake, движение, пакеты. */
     public void tick() {
         if (dead) return;
@@ -101,8 +134,7 @@ public class GhostConnection {
         if (!handshakeSent) {
             handshakeSent = true;
             conn.send(new HandshakeC2SPacket(SharedConstants.getProtocolVersion(), host, port, ConnectionIntent.LOGIN));
-            UUID uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + nick).getBytes(StandardCharsets.UTF_8));
-            conn.send(new LoginHelloC2SPacket(nick, uuid));
+            conn.send(new LoginHelloC2SPacket(session.nick, session.uuid));
             status = "login";
         }
         if (!playReady) return;
@@ -111,32 +143,40 @@ public class GhostConnection {
         lastMoveMs = now;
 
         if (hasTarget) {
-            double dx = tx - x, dz = tz - z, dy = ty - y;
-            double hd = Math.hypot(dx, dz);
-            double step = 4.2 * 0.05;
-            if (hd > 0.25) {
-                x += dx / hd * Math.min(step, hd);
-                z += dz / hd * Math.min(step, hd);
-                yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
+            boolean arrived = player.walkToward(world, tx, tz, 4.2);
+            // застрял (стена/яма) — подпрыгнуть
+            double moved = Math.hypot(player.x - lastX, player.z - lastZ);
+            if (moved < 0.05 && player.onGround) {
+                if (stuckMs == 0) stuckMs = now;
+                if (now - stuckMs > 500) {
+                    player.jump();
+                    stuckMs = now;
+                }
+            } else {
+                stuckMs = 0;
             }
-            if (Math.abs(dy) > 0.2) y += Math.signum(dy) * Math.min(2.0 * 0.05, Math.abs(dy));
-            pitch = 0f;
+            lastX = player.x;
+            lastZ = player.z;
+            if (arrived) hasTarget = false;
+        } else {
+            player.applyGravity(world);
         }
-        conn.send(new PlayerMoveC2SPacket.Full(x, y, z, yaw, pitch, true, false));
+        conn.send(new PlayerMoveC2SPacket.Full(player.x, player.y, player.z,
+                player.yaw, player.pitch, player.onGround, false));
         conn.send(ClientTickEndC2SPacket.INSTANCE);
     }
 
     public void onTeleport(int id, EntityPosition change, Set<PositionFlag> rel) {
-        double nx = rel.contains(PositionFlag.X) ? x + change.position().x : change.position().x;
-        double ny = rel.contains(PositionFlag.Y) ? y + change.position().y : change.position().y;
-        double nz = rel.contains(PositionFlag.Z) ? z + change.position().z : change.position().z;
-        float nyaw = rel.contains(PositionFlag.Y_ROT) ? yaw + change.yaw() : change.yaw();
-        float npitch = rel.contains(PositionFlag.X_ROT) ? pitch + change.pitch() : change.pitch();
-        x = nx;
-        y = ny;
-        z = nz;
-        yaw = nyaw;
-        pitch = npitch;
+        double nx = rel.contains(PositionFlag.X) ? player.x + change.position().x : change.position().x;
+        double ny = rel.contains(PositionFlag.Y) ? player.y + change.position().y : change.position().y;
+        double nz = rel.contains(PositionFlag.Z) ? player.z + change.position().z : change.position().z;
+        float nyaw = rel.contains(PositionFlag.Y_ROT) ? player.yaw + change.yaw() : change.yaw();
+        float npitch = rel.contains(PositionFlag.X_ROT) ? player.pitch + change.pitch() : change.pitch();
+        player.x = nx;
+        player.y = ny;
+        player.z = nz;
+        player.yaw = nyaw;
+        player.pitch = npitch;
         send(new TeleportConfirmC2SPacket(id));
     }
 

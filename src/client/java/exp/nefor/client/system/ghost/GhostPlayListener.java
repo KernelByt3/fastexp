@@ -34,14 +34,31 @@ public class GhostPlayListener extends GhostPlayBase {
         try {
             String text = packet.content().getString();
             if (text.length() > 160) text = text.substring(0, 160);
-            exp.nefor.client.util.player.chat.ChatUtil.sendMessage("§7[" + ghost.nick + "]§r " + text);
+            exp.nefor.client.util.player.chat.ChatUtil.sendMessage("§7[" + ghost.nick() + "]§r " + text);
         } catch (Exception ignored) {
         }
     }
 
     @Override
     public void onHealthUpdate(net.minecraft.network.packet.s2c.play.HealthUpdateS2CPacket packet) {
-        ghost.health = packet.getHealth();
+        ghost.player.health = packet.getHealth();
+    }
+
+    @Override
+    public void onChunkData(net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket packet) {
+        try {
+            ghost.world.onChunk(packet.getChunkX(), packet.getChunkZ(),
+                    packet.getChunkData().getHeightmap());
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public void onUnloadChunk(net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket packet) {
+        try {
+            ghost.world.onUnload(packet.pos().x, packet.pos().z);
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

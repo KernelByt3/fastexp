@@ -32,7 +32,7 @@ public class Bot extends Module {
             this.conn = conn;
         }
 
-        public String nick() { return conn.nick; }
+        public String nick() { return conn.nick(); }
         public String status() { return conn.status; }
     }
 
@@ -117,7 +117,8 @@ public class Bot extends Module {
         } catch (Exception e) {
             port = 25565;
         }
-        GhostConnection conn = new GhostConnection(nick, hp[0], port);
+        GhostConnection conn = new GhostConnection(
+                exp.nefor.client.system.ghost.GhostSession.of(nick), hp[0], port);
         Entry en = new Entry(conn);
         en.follow = followNew.getValue();
         bots.add(en);
@@ -185,7 +186,7 @@ public class Bot extends Module {
             if (en == possessed) {
                 drivePossessed(mc, c);
             } else if (en.follow && c.playReady) {
-                double d = Math.hypot(c.x - mc.player.getX(), c.z - mc.player.getZ());
+                double d = Math.hypot(c.player.x - mc.player.getX(), c.player.z - mc.player.getZ());
                 if (d > 3.0) c.setTarget(mc.player.getX(), mc.player.getY(), mc.player.getZ());
                 else c.clearTarget();
             }
@@ -209,6 +210,6 @@ public class Bot extends Module {
         double len = Math.hypot(wx, wz);
         wx = wx / len * 3.0;
         wz = wz / len * 3.0;
-        c.setTarget(c.x + wx, c.y, c.z + wz);
+        c.setTarget(c.player.x + wx, c.player.y, c.player.z + wz);
     }
 }

@@ -17,6 +17,42 @@ public final class CommandManager {
         register("cfg", new CfgCommand());
         register("friend", new FriendCommand());
         register("macro", new MacroCommand());
+        register("bot", new Command(){
+            public void run(String[] a){
+                var mod = exp.nefor.client.module.ModuleManager.get(exp.nefor.client.module.impl.player.Bot.class);
+                if(mod == null){ ChatUtil.sendMessageToClient("§cBot module missing", false); return; }
+                if(a.length == 0){
+                    ChatUtil.sendMessageToClient("§7.botsay <nick|*> <text> §8- сказать от лица бота", false);
+                    return;
+                }
+                String sub = a[0].toLowerCase();
+                if((sub.equals("say") || sub.equals("botsay")) && a.length >= 3){
+                    String who = a[1];
+                    String text = String.join(" ", java.util.Arrays.copyOfRange(a, 2, a.length));
+                    int n = 0;
+                    for(var en : mod.getBots()){
+                        if(who.equals("*") || en.nick().equalsIgnoreCase(who)){
+                            en.conn.sendChat(text);
+                            n++;
+                        }
+                    }
+                    ChatUtil.sendMessageToClient(n > 0 ? "§aSent as bot" : "§cNo such bot", false);
+                    return;
+                }
+                // .bot <nick|*> <text>
+                String who = a[0];
+                String text = String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length));
+                int n = 0;
+                for(var en : mod.getBots()){
+                    if(who.equals("*") || en.nick().equalsIgnoreCase(who)){
+                        en.conn.sendChat(text);
+                        n++;
+                    }
+                }
+                ChatUtil.sendMessageToClient(n > 0 ? "§aSent as bot" : "§cUsage: .bot <nick|*> <text>", false);
+            }
+            public String help(){ return ".bot <nick|*> <text> - сказать от лица бота"; }
+        });
         register("help", new Command(){ public void run(String[] a){ ChatUtil.sendMessageToClient("§7--- Nefor Commands ---", false); COMMANDS.forEach((k,c)-> ChatUtil.sendMessageToClient("§b."+k+" §7- "+c.help(), false)); } public String help(){ return "list commands"; }});
         register("vclip", new Command(){ public void run(String[] a){ try{ var mc = net.minecraft.client.MinecraftClient.getInstance(); if(mc.player==null) return; double v = a.length>0? Double.parseDouble(a[0]): 5; mc.player.setPosition(mc.player.getX(), mc.player.getY()+v, mc.player.getZ()); ChatUtil.sendMessageToClient("§aVClipped "+v, false);}catch(Exception e){ ChatUtil.sendMessageToClient("§cUsage: .vclip <blocks>", false);} } public String help(){ return "vclip <y>"; } });
     }
