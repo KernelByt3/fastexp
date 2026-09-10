@@ -112,7 +112,7 @@ public class KillAura extends Module {
 
         RotationProfile profile = currentProfile();
         // упреждение по скорости цели: ведём точку встречи, а не отстаём
-        double leadSec = MathHelper.clamp(player.distanceTo(target) * 0.06, 0.05, 0.22);
+        double leadSec = MathHelper.clamp(player.distanceTo(target) * 0.08, 0.05, 0.28);
 
         // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
         // иначе сервер видит спринт и криты не проходят (кроме KeepSprint)

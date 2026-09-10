@@ -65,19 +65,20 @@ public final class SmoothRotationManager {
     }
     private static float customFactor = -1f;
 
-    /** Мгновенная заморозка ротации (WindHop: фиксация перед броском). */
+    /** Мгновенная заморозка ротации (WindHop: фиксация перед броском). Без снапа: continuous. */
     public static void setInstant(float yaw, float pitch, RotationProfile p) {
         profile = p;
-        yaw = MathHelper.wrapDegrees(yaw);
         pitch = MathHelper.clamp(pitch, -90f, 90f);
-        // GCD всегда: значение едет в пакеты напрямую, минуя tick-снап
         float gcd = GcdUtil.getGcd();
-        if (gcd > 0.0001f && mc.player != null) {
-            yaw = GcdUtil.snapAngle(currentYaw, yaw, gcd);
-            pitch = GcdUtil.snapAngle(mc.player.getPitch(), pitch, gcd);
+        float delta = MathHelper.wrapDegrees(MathHelper.wrapDegrees(yaw) - MathHelper.wrapDegrees(currentYaw));
+        targetYaw = currentYaw + delta;
+        targetPitch = pitch;
+        if (gcd > 0.0001f) {
+            targetYaw = GcdUtil.snapAngle(currentYaw, targetYaw, gcd);
+            targetPitch = GcdUtil.snapAngle(currentPitch, targetPitch, gcd);
         }
-        currentYaw = targetYaw = yaw;
-        currentPitch = targetPitch = pitch;
+        currentYaw = targetYaw;
+        currentPitch = targetPitch;
         active = true;
         lastUpdate = System.currentTimeMillis();
         returning = false;
@@ -123,8 +124,9 @@ public final class SmoothRotationManager {
     public static void tick() {
         if (mc.player == null) { reset(); return; }
         if (!active) return;
-        if (System.currentTimeMillis() - lastUpdate > 380) { reset(); return; }
-        if (returning && System.currentTimeMillis() - returnStart > 500) { reset(); return; }
+        // протухшая цель — тоже глайдом к камере, НЕ reset (иначе снап >320° = AimModulo360)
+        if (System.currentTimeMillis() - lastUpdate > 380) { release(); return; }
+        if (returning && System.currentTimeMillis() - returnStart > 500) { release(); return; }
 
         long nowNs = System.nanoTime();
         float dt = (nowNs - lastTickNs) / 1_000_000_000f;
@@ -169,7 +171,7 @@ public final class SmoothRotationManager {
                 case HYPIXEL -> 8f;
                 case REALLY_WORLD -> 10f;
                 case FUN_TIME -> 11f;
-                default -> 14f;
+                default -> 18f;
             };
             maxPitch = 8f;
         }

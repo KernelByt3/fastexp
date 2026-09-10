@@ -30,8 +30,8 @@ import java.util.*;
  */
 public class ClickGui extends NeforScreen implements Bindable {
 
-    private static final float[] ACCENT = {0.36f, 0.49f, 1.0f};
-    private static final int ACCENT_TEXT = 0xFF7D9BFF;
+    private static final float[] ACCENT = {1f, 1f, 1f};
+    private static final int ACCENT_TEXT = 0xFFFFFFFF;
     private static final int TEXT = 0xFFEAEAF2;
     private static final int DIM = 0xFF9A9AA6;
     private static final int LABEL = 0xFF6E6E7A;
@@ -100,13 +100,12 @@ public class ClickGui extends NeforScreen implements Bindable {
         // window
         UiRender.roundRect(winX, winY, winW, winH, 12,
                 new float[]{0.045f,0.045f,0.065f,0.98f},
-                new float[]{1,1,1,0.07f}, 1,
-                ACCENT_F(0.09f*openProgress), 12);
+                new float[]{1,1,1,0.06f}, 1,
+                new float[]{0,0,0,0}, 0);
 
         // header logo
-        RenderSystem.drawText("N", winX + 16, winY + 11, 23.0f, ACCENT_TEXT);
-        RenderSystem.drawText("NEFOR", winX + 34, winY + 10, 13f, 0xFFFFFFFF);
-        RenderSystem.drawText("CLIENT  •  1.21.11", winX + 34, winY + 23, 8.5f, LABEL);
+        RenderSystem.drawText("nefor", winX + 16, winY + 11, 15f, 0xFFFFFFFF);
+        RenderSystem.drawText("1.21.11", winX + 16, winY + 26, 8f, LABEL);
 
         int y = winY + 52;
         RenderSystem.drawText("CATEGORIES", winX + 14, y, 7.5f, LABEL);
@@ -147,7 +146,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         int userY = winY+winH-38;
         UiRender.roundRect(winX+8, userY, SIDEBAR_W-16, 30, 8,
                 new float[]{1,1,1,0.04f}, new float[]{1,1,1,0.06f},1, new float[]{0,0,0,0},0);
-        UiRender.roundRect(winX+13, userY+7, 16,16,8, ACCENT_F(0.40f), new float[]{0,0,0,0},0, ACCENT_F(0.25f),4);
+        UiRender.roundRect(winX+13, userY+7, 16,16,8, new float[]{1,1,1,0.12f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         RenderSystem.drawText(user.substring(0,Math.min(1,user.length())).toUpperCase(), winX+18, userY+11, 9.5f, TEXT);
         RenderSystem.drawText(user, winX+34, userY+7, 10f, TEXT);
         RenderSystem.drawText("Premium", winX+34, userY+17, 8f, LABEL);
@@ -198,7 +197,7 @@ public class ClickGui extends NeforScreen implements Bindable {
             String txt = "Press key for " + waitingBind.bindLabel() + "  [ESC to cancel]";
             float w = RenderSystem.textWidth(txt,11f)+20;
             float x = this.width/2f - w/2; float yy = winY+winH+10;
-            UiRender.roundRect(x, yy, w, 22, 7, new float[]{0.12f,0.12f,0.18f,0.96f}, ACCENT_F(0.5f),1, ACCENT_F(0.3f),6);
+            UiRender.roundRect(x, yy, w, 22, 7, new float[]{0.12f,0.12f,0.18f,0.96f}, new float[]{1,1,1,0.20f},1, new float[]{0,0,0,0},0);
             RenderSystem.drawText(txt, x+10, yy+6, 11f, ACCENT_TEXT);
         }
     }
@@ -280,7 +279,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         String name = module.getName();
         float nameX = (float)(x+10);
         if(!search.isEmpty() && name.toLowerCase().contains(search.toLowerCase())){
-            UiRender.roundRect(nameX-2, y+5, RenderSystem.textWidth(name,12f)+4, 14,4, ACCENT_F(0.18f), new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
+            UiRender.roundRect(nameX-2, y+5, RenderSystem.textWidth(name,12f)+4, 14,4, new float[]{1,1,1,0.10f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         }
         RenderSystem.drawText(name, nameX, (float)(y+8), 12.2f, module.isEnabled()? TEXT: DIM);
         // desc peek
@@ -293,7 +292,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         double pillX = x+w-34; double pillY = y+7;
         double pillW=28; double pillH=14;
         float off = anim*14f;
-        UiRender.roundRect(pillX, pillY, pillW,pillH,7, anim>0.5? ACCENT_F(0.95f): new float[]{0.16f,0.16f,0.20f,1f}, new float[]{0,0,0,0},0, anim>0.5? ACCENT_F(0.30f): new float[]{0,0,0,0}, anim>0.5?4:0);
+        UiRender.roundRect(pillX, pillY, pillW,pillH,7, anim>0.5? ACCENT_F(0.95f): new float[]{0.16f,0.16f,0.20f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         UiRender.roundRect(pillX+1+off*0.92, pillY+1.5, 11,11,5.5f, new float[]{0.95f,0.96f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
         addHit(pillX-6, y, pillW+12,28, module::toggle, null,null);
@@ -305,7 +304,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         List<Setting> settings=module.getSettings();
         int h = 36 + Math.max(1,settings.size())*38 + 10;
         h = Math.min(h, this.height - y - M - 10);
-        UiRender.roundRect(x,y,w,h,10, new float[]{0.078f,0.078f,0.108f,0.98f}, new float[]{1,1,1,0.06f},1, ACCENT_F(0.10f),8);
+        UiRender.roundRect(x,y,w,h,10, new float[]{0.078f,0.078f,0.108f,0.98f}, new float[]{1,1,1,0.05f},1, new float[]{0,0,0,0},0);
         RenderSystem.drawText(module.getName(), x+10, y+10, 12.5f, TEXT);
         RenderSystem.drawText(module.getDescription(), x+10, y+22, 8f, LABEL);
         RenderSystem.drawText("×", x+w-16, y+9, 14f, UiRender.inBox(mouseX,mouseY,x+w-24,y+6,18,18)? 0xFFFF7070: DIM);
@@ -318,7 +317,7 @@ public class ClickGui extends NeforScreen implements Bindable {
                 RenderSystem.drawText(setting.getName(), x+8,rowY+8,11f, TEXT);
                 double tx=x+w-38; double ty=rowY+10;
                 float a = bool.getValue()?1:0;
-                UiRender.roundRect(tx,ty,26,14,7, bool.getValue()? ACCENT_F(0.95f): new float[]{0.16f,0.16f,0.20f,1f}, new float[]{0,0,0,0},0, bool.getValue()? ACCENT_F(0.28f): new float[]{0,0,0,0}, bool.getValue()?3:0);
+                UiRender.roundRect(tx,ty,26,14,7, bool.getValue()? ACCENT_F(0.95f): new float[]{0.16f,0.16f,0.20f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
                 UiRender.roundRect(tx+1.5 + a*12, ty+1.5, 11,11,5.5f, new float[]{0.95f,0.96f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
                 addHit(tx-4,rowY,34,34, bool::toggle,null,null);
             } else if(setting instanceof SliderSetting slider){
@@ -331,7 +330,7 @@ public class ClickGui extends NeforScreen implements Bindable {
                 double frac=(v-slider.getMin())/(slider.getMax()-slider.getMin());
                 UiRender.roundRect(trackX,trackY,trackW,5,2.5f, new float[]{0.17f,0.17f,0.22f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
                 float fillW=(float)Math.max(4, trackW*frac);
-                UiRender.roundRect(trackX,trackY,fillW,5,2.5f, ACCENT_F(0.95f), new float[]{0,0,0,0},0, ACCENT_F(0.22f),4);
+                UiRender.roundRect(trackX,trackY,fillW,5,2.5f, ACCENT_F(0.95f), new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
                 UiRender.roundRect(trackX+fillW-4, trackY-3, 8,10,4, new float[]{0.95f,0.96f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
                 addDragHit(trackX-4,rowY,trackW+8,34,null, dragX->{
                     double f=Math.max(0,Math.min(1,(dragX-trackX)/trackW));
@@ -394,7 +393,7 @@ public class ClickGui extends NeforScreen implements Bindable {
             int code=click.button(); String label=waitingBind.bindLabel();
             if(code==GLFW.GLFW_MOUSE_BUTTON_1) waitingBind=null;
             else { waitingBind.setKeyCode(code); waitingBind=null; }
-            RenderSystem.notification("Bound "+label+" -> "+keyLabel(code), 0xFF7D9BFF);
+            RenderSystem.notification("Bound "+label+" -> "+keyLabel(code), 0xFFFFFFFF);
             return true;
         }
         double mx=click.x(); double my=click.y();
@@ -451,7 +450,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         selectedModule=null; waitingBind=null; search=""; searchFocused=false;
         ConfigManager.save(); super.close();
     }
-    private void startBind(Bindable b){ if(waitingBind==b) return; waitingBind=b; LOGGER.info("Bind mode: {}",b.bindLabel()); RenderSystem.notification("Bind: press a key for "+b.bindLabel(), 0xFF7D9BFF); }
+    private void startBind(Bindable b){ if(waitingBind==b) return; waitingBind=b; LOGGER.info("Bind mode: {}",b.bindLabel()); RenderSystem.notification("Bind: press a key for "+b.bindLabel(), 0xFFFFFFFF); }
     private String keyLabel(int kc){
         if(kc==GLFW.GLFW_KEY_UNKNOWN) return "[ ]";
         if(kc>=GLFW.GLFW_MOUSE_BUTTON_1 && kc<=GLFW.GLFW_MOUSE_BUTTON_5) return "[M"+(kc+1)+"]";

@@ -55,9 +55,9 @@ public class WindHop extends Module {
         }
         // паузим KillAura чтобы не конфликтовать по ротации (BadPacketsJ)
         var ka = exp.nefor.client.module.ModuleManager.get(exp.nefor.client.module.impl.combat.KillAura.class);
-        if (ka != null && ka.getTarget() != null) {
-            SmoothRotationManager.reset();
-            RotationUtil.reset();
+        if(ka!=null && ka.getTarget()!=null){
+            // глайдом, не reset: снап ротации = Grim AimModulo360
+            exp.nefor.client.system.rotation.SmoothRotationManager.release();
         }
         active = true;
         stage = 0;

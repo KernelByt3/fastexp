@@ -83,7 +83,7 @@ public class NeuroAura extends Module {
         }
 
         float[] ang = RotationUtil.getRotations(target,
-                MathHelper.clamp(player.distanceTo(target) * 0.06, 0.05, 0.22));
+                MathHelper.clamp(player.distanceTo(target) * 0.08, 0.05, 0.28));
         float baseYaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
         float basePitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
         float deltaYaw = MathHelper.wrapDegrees(ang[0] - baseYaw);

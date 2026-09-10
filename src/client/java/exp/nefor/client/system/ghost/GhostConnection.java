@@ -32,6 +32,7 @@ public class GhostConnection {
     public volatile String status = "connecting";
     public volatile boolean playReady = false;
     public volatile boolean dead = false;
+    public volatile float health = 20f;
 
     private ClientConnection conn;
     private boolean handshakeSent = false;

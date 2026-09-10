@@ -81,7 +81,7 @@ public class BotScreen extends NeforScreen {
             String st = en.status();
             if (st.length() > 26) st = st.substring(0, 26);
             RenderSystem.drawText(st, x + 12, rowY + 16, 8f, 0xFF6E6E78);
-            String mode = en.follow ? "follow" : "stay";
+            String mode = (en.follow ? "follow" : "stay") + " · " + (int) en.conn.health + "hp";
             RenderSystem.drawText(mode, x + W - 12 - RenderSystem.textWidth(mode, 9f), rowY + 9, 9f, 0xFF6E6E78);
         }
         if (bots.isEmpty()) {

@@ -29,6 +29,22 @@ public class GhostPlayListener extends GhostPlayBase {
     }
 
     @Override
+    public void onGameMessage(net.minecraft.network.packet.s2c.play.GameMessageS2CPacket packet) {
+        if (packet.overlay()) return;
+        try {
+            String text = packet.content().getString();
+            if (text.length() > 160) text = text.substring(0, 160);
+            exp.nefor.client.util.player.chat.ChatUtil.sendMessage("§7[" + ghost.nick + "]§r " + text);
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public void onHealthUpdate(net.minecraft.network.packet.s2c.play.HealthUpdateS2CPacket packet) {
+        ghost.health = packet.getHealth();
+    }
+
+    @Override
     public void onBundle(net.minecraft.network.packet.s2c.play.BundleS2CPacket packet) {
         for (var sub : packet.getPackets()) {
             try {
