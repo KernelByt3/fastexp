@@ -45,7 +45,7 @@ public class Bot extends Module {
 
     private final ChoiceSetting mode = new ChoiceSetting("Режим новых", List.of("Follow", "Stay"), 0);
     private final KeybindSetting windowKey = new KeybindSetting("Окно ботов", this::openWindow);
-    private final KeybindSetting possessKey = new KeybindSetting("Вселение", () -> possess(selected));
+    private final KeybindSetting possessKey = new KeybindSetting("Вселение", this::possessSelected);
 
     private final List<Entry> bots = new ArrayList<>();
     private Entry selected;
@@ -89,6 +89,10 @@ public class Bot extends Module {
         return "unknown";
     }
 
+    private void possessSelected() {
+        possess(selected);
+    }
+
     private void openWindow() {
         var mc = MinecraftClient.getInstance();
         if (mc == null) return;
@@ -108,7 +112,7 @@ public class Bot extends Module {
         nick = nick.trim();
         if (nick.length() > 16) nick = nick.substring(0, 16);
         OtherClientPlayerEntity e = new OtherClientPlayerEntity(mc.world, new GameProfile(UUID.randomUUID(), nick));
-        Vec3d p = mc.player.getPos();
+        Vec3d p = new Vec3d(mc.player.getX\(\), mc.player.getY\(\), mc.player.getZ\(\));
         e.setPosition(p.x + 1.0 + bots.size() * 0.7, p.y, p.z);
         e.setYaw(mc.player.getYaw());
         e.setBodyYaw(mc.player.getYaw());
@@ -147,7 +151,7 @@ public class Bot extends Module {
     public void bringToMe(Entry en) {
         var mc = MinecraftClient.getInstance();
         if (en == null || mc.player == null) return;
-        Vec3d p = mc.player.getPos();
+        Vec3d p = new Vec3d(mc.player.getX\(\), mc.player.getY\(\), mc.player.getZ\(\));
         en.entity.setPosition(p.x + 1.0, p.y, p.z);
         en.entity.setVelocity(0, 0, 0);
     }
@@ -209,7 +213,7 @@ public class Bot extends Module {
         var e = en.entity;
         double dist = e.distanceTo(mc.player);
         if (dist > 2.5) {
-            float yaw = yawTo(e.getPos(), mc.player.getPos());
+            float yaw = yawTo(new Vec3d(e.getX(), e.getY(), e.getZ()), new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()));
             e.setYaw(yaw);
             e.setBodyYaw(yaw);
             double speed = dist > 8 ? 0.30 : 0.22;
