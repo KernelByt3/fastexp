@@ -9,25 +9,28 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Окно ботов: поле ника, сервер, список. ПКМ по боту — вселение/возврат
- * (трансляция вида + управление), ЛКМ — выбор.
+ * Окно ботов: поле ника, поле сервера, список со статусами.
+ * ПКМ по боту — вселение движением/возврат, ЛКМ — выбор.
  */
 public class BotScreen extends NeforScreen {
 
-    private static final int W = 260;
+    private static final int W = 280;
 
     private String nickInput = "";
-    private boolean inputFocused = true;
+    private String serverInput;
+    private boolean nickFocused = true;
+    private boolean serverFocused = false;
     private long blinkStart = System.currentTimeMillis();
     private final long openMs = System.currentTimeMillis();
 
     public BotScreen() {
         super(Text.literal("Bots"));
+        serverInput = Bot.currentServer();
     }
 
     private Bot bot() { return Bot.get(); }
     private int cx() { return this.width / 2 - W / 2; }
-    private int top() { return Math.max(16, this.height / 2 - 200); }
+    private int top() { return Math.max(12, this.height / 2 - 210); }
 
     private float inDy(int stagger) {
         float e = exp.nefor.client.util.AnimationUtil.openT(openMs, 60 + stagger * 40L, 240L);
@@ -42,24 +45,24 @@ public class BotScreen extends NeforScreen {
         int y = top();
 
         RenderSystem.drawText("bots", x + W / 2f - RenderSystem.textWidth("bots", 15f) / 2, y + inDy(0), 15f, 0xFFFFFFFF);
-        String srv = b == null ? "?" : Bot.currentServer();
-        RenderSystem.drawText(srv, x + W / 2f - RenderSystem.textWidth(srv, 9f) / 2, y + 20 + inDy(0), 9f, 0xFF6E6E78);
 
         // поле ника + добавить
-        boolean fh = UiRender.inBox(mouseX, mouseY, x, y + 36, W - 64, 22);
-        UiRender.field(x, y + 36, W - 64, 22, inputFocused || fh);
-        String shown = nickInput.isEmpty() ? "nick..." : nickInput;
-        boolean blink = (System.currentTimeMillis() - blinkStart) / 530 % 2 == 0;
-        RenderSystem.drawText(shown + (inputFocused && blink ? "_" : ""), x + 8, y + 42, 11f,
-                nickInput.isEmpty() ? 0xFF6E6E78 : 0xFFEAEAF2);
-        boolean addH = UiRender.inBox(mouseX, mouseY, x + W - 58, y + 36, 58, 22);
-        UiRender.button(x + W - 58, y + 36, 58, 22, "Add", addH, false);
+        boolean fh = UiRender.inBox(mouseX, mouseY, x, y + 26, W - 64, 22);
+        UiRender.field(x, y + 26, W - 64, 22, nickFocused || fh);
+        drawFieldText(x + 8, y + 32, nickInput, nickFocused, "nick...");
+        boolean addH = UiRender.inBox(mouseX, mouseY, x + W - 58, y + 26, 58, 22);
+        UiRender.button(x + W - 58, y + 26, 58, 22, "Add", addH, false);
+
+        // поле сервера
+        boolean sh = UiRender.inBox(mouseX, mouseY, x, y + 52, W, 22);
+        UiRender.field(x, y + 52, W, 22, serverFocused || sh);
+        drawFieldText(x + 8, y + 58, serverInput, serverFocused, "server:port");
 
         // список
-        int listY = y + 66;
+        int listY = y + 82;
         int rowH = 26;
         java.util.List<Bot.Entry> bots = b == null ? java.util.List.of() : b.getBots();
-        int listH = Math.max(34, Math.min(bots.size() * (rowH + 4) + 8, 200));
+        int listH = Math.max(34, Math.min(bots.size() * (rowH + 4) + 8, 190));
         UiRender.field(x, listY, W, listH, false);
         for (int i = 0; i < bots.size(); i++) {
             Bot.Entry en = bots.get(i);
@@ -73,16 +76,18 @@ public class BotScreen extends NeforScreen {
                         live ? new float[]{1, 1, 1, 0.16f} : selectedFill(sel, hov),
                         new float[]{0, 0, 0, 0}, 0, new float[]{0, 0, 0, 0}, 0);
             }
-            String label = en.nick + (live ? "  LIVE" : "");
-            RenderSystem.drawText(label, x + 12, rowY + 8, 11f, live ? 0xFFFFFFFF : sel ? 0xFFFFFFFF : 0xFFB9B9C4);
+            RenderSystem.drawText(en.nick() + (live ? "  LIVE" : ""), x + 12, rowY + 4, 11f,
+                    live || sel ? 0xFFFFFFFF : 0xFFB9B9C4);
+            String st = en.status();
+            if (st.length() > 26) st = st.substring(0, 26);
+            RenderSystem.drawText(st, x + 12, rowY + 16, 8f, 0xFF6E6E78);
             String mode = en.follow ? "follow" : "stay";
             RenderSystem.drawText(mode, x + W - 12 - RenderSystem.textWidth(mode, 9f), rowY + 9, 9f, 0xFF6E6E78);
         }
         if (bots.isEmpty()) {
-            RenderSystem.drawText("empty — add nick above", x + 12, listY + 11, 10f, 0xFF6E6E78);
+            RenderSystem.drawText("empty — nick + server, Add", x + 12, listY + 11, 10f, 0xFF6E6E78);
         }
 
-        // низ: режим / ко мне / закрыть
         int btnY = listY + listH + 8;
         int btnW = (W - 8) / 3;
         boolean h1 = UiRender.inBox(mouseX, mouseY, x, btnY, btnW, 20);
@@ -97,10 +102,24 @@ public class BotScreen extends NeforScreen {
                 btnY + 26, 8f, 0xFF6E6E78);
     }
 
+    private void drawFieldText(float x, float y, String value, boolean focused, String hint) {
+        String shown = value.isEmpty() ? hint : value;
+        boolean blink = (System.currentTimeMillis() - blinkStart) / 530 % 2 == 0;
+        RenderSystem.drawText(shown + (focused && blink ? "_" : ""), x, y, 11f,
+                value.isEmpty() ? 0xFF6E6E78 : 0xFFEAEAF2);
+    }
+
     private static float[] selectedFill(boolean sel, boolean hov) {
         if (sel) return new float[]{1, 1, 1, 0.12f};
         if (hov) return new float[]{1, 1, 1, 0.06f};
         return new float[]{0, 0, 0, 0};
+    }
+
+    private void addFromFields() {
+        Bot b = bot();
+        if (b == null) return;
+        Bot.Entry en = b.spawnBot(nickInput.isBlank() ? null : nickInput.trim(), serverInput);
+        if (en != null) nickInput = "";
     }
 
     @Override
@@ -111,42 +130,46 @@ public class BotScreen extends NeforScreen {
         int x = cx();
         int y = top();
 
-        if (UiRender.inBox(mx, my, x, y + 36, W - 64, 22)) {
-            inputFocused = true;
+        if (UiRender.inBox(mx, my, x, y + 26, W - 64, 22)) {
+            nickFocused = true;
+            serverFocused = false;
             blinkStart = System.currentTimeMillis();
             return true;
         }
-        if (UiRender.inBox(mx, my, x + W - 58, y + 36, 58, 22)) {
-            if (click.button() == 0) {
-                Bot.Entry en = b.spawnBot(nickInput.isBlank() ? null : nickInput.trim());
-                if (en != null) nickInput = "";
-            }
+        if (UiRender.inBox(mx, my, x, y + 52, W, 22)) {
+            serverFocused = true;
+            nickFocused = false;
+            blinkStart = System.currentTimeMillis();
+            return true;
+        }
+        if (UiRender.inBox(mx, my, x + W - 58, y + 26, 58, 22)) {
+            if (click.button() == 0) addFromFields();
             return true;
         }
 
-        int listY = y + 66;
+        int listY = y + 82;
         int rowH = 26;
         java.util.List<Bot.Entry> bots = b.getBots();
-        int listH = Math.max(34, Math.min(bots.size() * (rowH + 4) + 8, 200));
         for (int i = 0; i < bots.size(); i++) {
             int rowY = listY + 4 + i * (rowH + 4);
             if (UiRender.inBox(mx, my, x + 4, rowY - 6, W - 8, rowH + 12)) {
                 Bot.Entry en = bots.get(i);
-                if (click.button() == 1) b.possess(en); // ПКМ — вселение/возврат
+                if (click.button() == 1) b.possess(en);
                 else b.setSelected(en);
                 return true;
             }
         }
 
+        int listH = Math.max(34, Math.min(bots.size() * (rowH + 4) + 8, 190));
         int btnY = listY + listH + 8;
         int btnW = (W - 8) / 3;
         Bot.Entry sel = b.getSelected();
         if (UiRender.inBox(mx, my, x, btnY, btnW, 20)) {
-            if (sel != null) { sel.follow = !sel.follow; }
+            if (sel != null) sel.follow = !sel.follow;
             return true;
         }
         if (UiRender.inBox(mx, my, x + btnW + 4, btnY, btnW, 20)) {
-            b.bringToMe(sel); // бот идёт на основу
+            b.bringToMe(sel);
             return true;
         }
         if (UiRender.inBox(mx, my, x + (btnW + 4) * 2, btnY, btnW, 20)) {
@@ -158,10 +181,18 @@ public class BotScreen extends NeforScreen {
 
     @Override
     public boolean charTyped(CharInput ci) {
-        if (inputFocused && ci.isValidChar() && nickInput.length() < 16) {
-            int cp = ci.codepoint();
+        if (!ci.isValidChar()) return super.charTyped(ci);
+        int cp = ci.codepoint();
+        if (nickFocused && nickInput.length() < 16) {
             if (Character.isLetterOrDigit(cp) || cp == '_' || cp == '-') {
                 nickInput += ci.asString();
+                blinkStart = System.currentTimeMillis();
+                return true;
+            }
+        }
+        if (serverFocused && serverInput.length() < 64) {
+            if (Character.isLetterOrDigit(cp) || cp == '.' || cp == ':' || cp == '-' || cp == '_') {
+                serverInput += ci.asString();
                 blinkStart = System.currentTimeMillis();
                 return true;
             }
@@ -173,20 +204,27 @@ public class BotScreen extends NeforScreen {
     public boolean keyPressed(KeyInput ki) {
         int k = ki.key();
         if (k == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
-        if (inputFocused) {
-            if (k == GLFW.GLFW_KEY_BACKSPACE && !nickInput.isEmpty()) {
+        if (k == GLFW.GLFW_KEY_BACKSPACE) {
+            if (nickFocused && !nickInput.isEmpty()) {
                 nickInput = nickInput.substring(0, nickInput.length() - 1);
                 blinkStart = System.currentTimeMillis();
                 return true;
             }
-            if (k == GLFW.GLFW_KEY_ENTER) {
-                Bot b = bot();
-                if (b != null) {
-                    Bot.Entry en = b.spawnBot(nickInput.isBlank() ? null : nickInput.trim());
-                    if (en != null) nickInput = "";
-                }
+            if (serverFocused && !serverInput.isEmpty()) {
+                serverInput = serverInput.substring(0, serverInput.length() - 1);
+                blinkStart = System.currentTimeMillis();
                 return true;
             }
+        }
+        if (k == GLFW.GLFW_KEY_ENTER && nickFocused) {
+            addFromFields();
+            return true;
+        }
+        if (k == GLFW.GLFW_KEY_TAB) {
+            boolean n = nickFocused;
+            nickFocused = !n;
+            serverFocused = n;
+            return true;
         }
         return super.keyPressed(ki);
     }

@@ -228,7 +228,6 @@ public class KillAura extends Module {
         double bestScore = Double.MAX_VALUE;        for (var entity : world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (entity == player || !living.isAlive() || living.isRemoved()) continue;
-            if (exp.nefor.client.module.impl.player.Bot.isBot(living)) continue;
             if (entity instanceof net.minecraft.entity.player.PlayerEntity pe && exp.nefor.client.system.FriendManager.isFriend(pe.getName().getString())) continue;
             if (living instanceof net.minecraft.entity.player.PlayerEntity pe2 && pe2.isCreative()) continue;
             if (living.hurtTime>0) continue;
