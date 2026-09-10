@@ -34,6 +34,9 @@ public class MinecraftClientMixin {
 
 		MinecraftClient client = (MinecraftClient) (Object) this;
 
+		// доводка каждый кадр (155fps), а не 20 TPS — иначе ступеньки как у робота
+		exp.nefor.client.system.rotation.SmoothRotationManager.tick();
+
 		RenderSystem.render();
 
 		if (client.currentScreen instanceof exp.nefor.client.gui.CustomRenderedScreen screen) {
