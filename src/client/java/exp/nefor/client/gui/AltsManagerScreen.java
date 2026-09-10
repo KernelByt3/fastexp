@@ -25,6 +25,12 @@ public class AltsManagerScreen extends NeforScreen {
     private List<String> filtered = List.of();
     private double scroll = 0;
     private long blinkStart = System.currentTimeMillis();
+    private final long openMs = System.currentTimeMillis();
+
+    private float rowDy(int stagger) {
+        float e = exp.nefor.client.util.AnimationUtil.openT(openMs, 80 + stagger * 35L, 240L);
+        return (1f - e) * 10f;
+    }
 
     public AltsManagerScreen(Screen parent) {
         super(Text.literal("Alt Manager"));
@@ -72,7 +78,7 @@ public class AltsManagerScreen extends NeforScreen {
         int yOff = (int) (scroll % rowH);
         int drawn = 0;
         for (int i = start; i < filtered.size(); i++) {
-            int rowY = listY + 4 + drawn * rowH - yOff;
+            int rowY = listY + 4 + drawn * rowH - yOff + (int) rowDy(drawn);
             if (rowY + rowH < listY || rowY > listY + listH - 4) { drawn++; continue; }
             if (drawn * rowH > listH) break;
             String alt = filtered.get(i);
@@ -148,7 +154,11 @@ public class AltsManagerScreen extends NeforScreen {
             int yOff = (int) (scroll % rowH);
             int idx = start + (int) (my - listY - 4 + yOff) / rowH;
             if (idx >= 0 && idx < filtered.size()) {
-                String alt = filtered.get(idx);
+                // поправка на stagger-анимацию строк
+                int staggerDy = (int) rowDy(idx - start);
+                int idxAdj = start + (int) (my - listY - 4 + yOff - staggerDy) / rowH;
+                if (idxAdj < 0 || idxAdj >= filtered.size()) return true;
+                String alt = filtered.get(idxAdj);
                 if (doubled) {
                     if (AltsManager.login(alt)) close();
                     return true;

@@ -78,8 +78,11 @@ public class NeuralTrainingScreen extends NeforScreen {
             else spawnTarget();
         }
 
-        UiRender.roundRect(targetX - targetR, targetY - targetR, targetR * 2, targetR * 2, 999,
-                hovering ? new float[]{1, 1, 1, 1f} : new float[]{1, 1, 1, 0.25f},
+        // pop-in точки: быстро вырастает при спавне
+        float pop = exp.nefor.client.util.AnimationUtil.easeOutCubic(
+                Math.min(1f, (System.currentTimeMillis() - spawnTime) / 160f));
+        float rr = Math.max(2f, targetR * (0.3f + 0.7f * pop));
+        UiRender.roundRect(targetX - rr, targetY - rr, rr * 2, rr * 2, 999,                hovering ? new float[]{1, 1, 1, 1f} : new float[]{1, 1, 1, 0.25f},
                 new float[]{1, 1, 1, hovering ? 0.9f : 0.3f}, 1,
                 new float[]{0, 0, 0, 0}, 0);
         UiRender.roundRect(targetX - 2, targetY - 2, 4, 4, 2,

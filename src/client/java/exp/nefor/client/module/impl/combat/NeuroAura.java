@@ -157,6 +157,7 @@ public class NeuroAura extends Module {
         for (var e : world.getEntities()) {
             if (!(e instanceof LivingEntity l)) continue;
             if (e == p || !l.isAlive() || l.isRemoved()) continue;
+            if (exp.nefor.client.module.impl.player.Bot.isBot(l)) continue;
             if (e instanceof net.minecraft.entity.player.PlayerEntity pe
                     && exp.nefor.client.system.FriendManager.isFriend(pe.getName().getString())) continue;
             if (l instanceof net.minecraft.entity.player.PlayerEntity pe2 && pe2.isCreative()) continue;

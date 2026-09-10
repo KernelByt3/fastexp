@@ -16,4 +16,10 @@ public final class AnimationUtil {
         if(Math.abs(delta)<0.01f) return target;
         return current + delta * MathHelper.clamp(speed*0.2f, 0.05f, 0.4f);
     }
+
+    /** Прогресс появления 0→1 с задержкой (для stagger-анимаций). */
+    public static float openT(long openMs, long delayMs, long durMs){
+        float t = (System.currentTimeMillis() - openMs - delayMs) / (float) durMs;
+        return easeOutCubic(MathHelper.clamp(t, 0f, 1f));
+    }
 }

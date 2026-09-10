@@ -15,6 +15,7 @@ import exp.nefor.client.module.impl.movement.NoFall;
 import exp.nefor.client.module.impl.movement.WindHop;
 import exp.nefor.client.module.impl.player.AntiAfk;
 import exp.nefor.client.module.impl.player.AutoSell;
+import exp.nefor.client.module.impl.player.Bot;
 import exp.nefor.client.module.impl.player.FakePlayer;
 import exp.nefor.client.module.impl.render.FullBright;
 import exp.nefor.client.module.impl.render.Hud;
@@ -50,6 +51,7 @@ public class ModuleManager {
         register(new AutoSprint());
         register(new AutoSell());
         register(new AntiAfk());
+        register(new Bot());
         register(new KillAura());
         register(new NeuroAura());
         register(new FakePlayer());

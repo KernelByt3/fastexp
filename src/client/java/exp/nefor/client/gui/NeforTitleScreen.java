@@ -17,6 +17,13 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
 
     private double mouseX;
     private double mouseY;
+    private final long openMs = System.currentTimeMillis();
+
+    /** Сдвиг появления кнопки (stagger): клики считают тот же сдвиг. */
+    private float btnDy(int i) {
+        float e = exp.nefor.client.util.AnimationUtil.openT(openMs, 60 + i * 45L, 260L);
+        return (1f - e) * 16f;
+    }
 
     public NeforTitleScreen() {
         super(Text.literal("NeforClient"));
@@ -49,10 +56,11 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
 
         UiRender.background(this.width, this.height);
 
+        float titleE = exp.nefor.client.util.AnimationUtil.openT(openMs, 0L, 300L);
         float titleSize = 26.0f;
         float titleWidth = exp.nefor.client.render.RenderSystem.textWidth("nefor", titleSize);
         float titleX = this.width / 2.0f - titleWidth / 2.0f;
-        float titleY = this.height / 2.0f - 100.0f;
+        float titleY = this.height / 2.0f - 100.0f - (1f - titleE) * 12f;
         exp.nefor.client.render.RenderSystem.drawText("nefor", titleX, titleY, titleSize, 0xFFFFFFFF);
 
         String sub = "fabric 1.21.11";
@@ -60,9 +68,12 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
                 this.width / 2.0f - exp.nefor.client.render.RenderSystem.textWidth(sub, 11.0f) / 2.0f,
                 titleY + 30.0f, 11.0f, 0xFF9A9AA5);
 
-        for (Button button : buttons()) {
-            boolean hovered = UiRender.inBox(mouseX, mouseY, button.x(), button.y(), button.w(), button.h());
-            UiRender.button(button.x(), button.y(), button.w(), button.h(), button.label(), hovered, button.danger());
+        List<Button> btns = buttons();
+        for (int i = 0; i < btns.size(); i++) {
+            Button button = btns.get(i);
+            float dy = btnDy(i);
+            boolean hovered = UiRender.inBox(mouseX, mouseY, button.x(), button.y() + dy, button.w(), button.h());
+            UiRender.button(button.x(), button.y() + dy, button.w(), button.h(), button.label(), hovered, button.danger());
         }
 
         String hint = "Right Shift — menu";
@@ -73,8 +84,10 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-        for (Button button : buttons()) {
-            if (UiRender.inBox(click.x(), click.y(), button.x(), button.y(), button.w(), button.h())) {
+        List<Button> btns = buttons();
+        for (int i = 0; i < btns.size(); i++) {
+            Button button = btns.get(i);
+            if (UiRender.inBox(click.x(), click.y(), button.x(), button.y() + btnDy(i), button.w(), button.h())) {
                 button.action().run();
                 return true;
             }
