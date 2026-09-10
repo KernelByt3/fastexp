@@ -24,6 +24,7 @@ public class NeuroAura extends Module {
     private final BooleanSetting neuro = new BooleanSetting("Нейро", true);
     private final SliderSetting range = new SliderSetting("Радиус", 2.8, 4.5, 0.1, 3.2);
     private final BooleanSetting onlyCrits = new BooleanSetting("Только криты", true);
+    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
     private final BooleanSetting autoTrain = new BooleanSetting("Авто-дообучение", false);
 
     private LivingEntity target;
@@ -32,7 +33,7 @@ public class NeuroAura extends Module {
 
     public NeuroAura() {
         super("NeuroAura", "Нейро-аура обучаемая", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(neuro, range, onlyCrits, autoTrain);
+        addSettings(neuro, range, onlyCrits, rotateCamera, autoTrain);
     }
 
     @Override
@@ -101,6 +102,12 @@ public class NeuroAura extends Module {
         }
 
         SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
+
+        // видимый доворот камеры за прицелом (пакеты те же, разница только в картинке)
+        if (rotateCamera.getValue() && RotationUtil.isRotating) {
+            player.setYaw(RotationUtil.targetYaw);
+            player.setPitch(RotationUtil.targetPitch);
+        }
 
         
         if (player.distanceTo(target) > maxReach + 0.3) return;

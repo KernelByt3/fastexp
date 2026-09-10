@@ -32,6 +32,7 @@ public class KillAura extends Module {
     private final ChoiceSetting aimPoint = new ChoiceSetting("Точка", List.of("Авто", "Голова", "Грудь", "Ноги", "Ближайшая"), 4);
     private final BooleanSetting neuroLearn = new BooleanSetting("Нейро (твои движения)", false);
     private final BooleanSetting keepSprint = new BooleanSetting("KeepSprint", false);
+    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
     private final BooleanSetting throughWalls = new BooleanSetting("Через стены", false);
     private final ChoiceSetting targetMode = new ChoiceSetting("Приоритет", List.of("Ближайший","Здоровье","Угол"), 0);
 
@@ -41,7 +42,7 @@ public class KillAura extends Module {
 
     public KillAura() {
         super("KillAura", "Убивает", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(range, onlyCrits, maceSpam, rotationMode, aimPoint, neuroLearn, keepSprint, throughWalls, targetMode);
+        addSettings(range, onlyCrits, maceSpam, rotationMode, aimPoint, neuroLearn, keepSprint, throughWalls, targetMode, rotateCamera);
     }
 
     private RotationProfile currentProfile() {
@@ -142,6 +143,12 @@ public class KillAura extends Module {
             }
         }
 
+        // видимый доворот камеры за прицелом (пакеты те же, разница только в картинке)
+        if (rotateCamera.getValue() && RotationUtil.isRotating) {
+            player.setYaw(RotationUtil.targetYaw);
+            player.setPitch(RotationUtil.targetPitch);
+        }
+
         
         
         double eyeDist = player.getEyePos().distanceTo(exp.nefor.client.util.RaycastUtil.closestPoint(target.getBoundingBox(), player.getEyePos()));
@@ -149,7 +156,7 @@ public class KillAura extends Module {
         if (player.distanceTo(target) > maxReach + 0.3) return;
 
         boolean moving = player.getVelocity().horizontalLength() > 0.08 || client.options.forwardKey.isPressed() || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
-        float aimFov = moving ? 24f : currentProfile().fovCheck;
+        float aimFov = moving ? 28f : currentProfile().fovCheck;
         if (!RotationUtil.isLookingAt(target, aimFov)) return;
 
         
