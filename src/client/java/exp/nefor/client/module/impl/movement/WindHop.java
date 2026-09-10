@@ -202,6 +202,8 @@ public class WindHop extends Module {
         active = false;
         stage = 0;
         windSlot = -1;
+        // любой выход из хопа возвращает взгляд — иначе silent виснет навсегда
+        SmoothRotationManager.release();
     }
 
     private int findWindChargeHotbar() {
