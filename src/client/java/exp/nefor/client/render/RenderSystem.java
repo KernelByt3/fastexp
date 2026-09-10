@@ -44,6 +44,9 @@ public final class RenderSystem {
     private static final int LATIN_COUNT = 0x100 - LATIN_FIRST;
     private static final int CYRILLIC_FIRST = 0x400;
     private static final int CYRILLIC_COUNT = 0x100;
+    // пунктуация и символы (U+2000-U+207F): bullet, тире, кавычки, … и т.д.
+    private static final int SYMBOLS_FIRST = 0x2000;
+    private static final int SYMBOLS_COUNT = 0x80;
     private static final int OVERSAMPLE = 3;
     private static final int[] ATLAS_SIZES = {512, 1024, 2048, 4096, 8192};
     private static final int MIN_PIXEL_HEIGHT = 6;
@@ -119,7 +122,8 @@ public final class RenderSystem {
 
     private record Atlas(String fontId, int texture, int size,
                          STBTTPackedchar.Buffer latin,
-                         STBTTPackedchar.Buffer cyrillic, float baseline) {}
+                         STBTTPackedchar.Buffer cyrillic,
+                         STBTTPackedchar.Buffer symbols, float baseline) {}
 
     private static final Map<String, Atlas> ATLASES = new HashMap<>();
     private static final Map<String, ByteBuffer> FONT_DATA = new HashMap<>();
@@ -268,6 +272,9 @@ public final class RenderSystem {
                 } else if (codePoint >= CYRILLIC_FIRST && codePoint < CYRILLIC_FIRST + CYRILLIC_COUNT) {
                     range = atlas.cyrillic();
                     index = codePoint - CYRILLIC_FIRST;
+                } else if (codePoint >= SYMBOLS_FIRST && codePoint < SYMBOLS_FIRST + SYMBOLS_COUNT) {
+                    range = atlas.symbols();
+                    index = codePoint - SYMBOLS_FIRST;
                 } else {
                     range = atlas.latin();
                     index = '?' - LATIN_FIRST;
@@ -389,6 +396,7 @@ public final class RenderSystem {
             ByteBuffer bitmap = MemoryUtil.memAlloc(size * size);
             STBTTPackedchar.Buffer latin = STBTTPackedchar.malloc(LATIN_COUNT);
             STBTTPackedchar.Buffer cyrillic = STBTTPackedchar.malloc(CYRILLIC_COUNT);
+            STBTTPackedchar.Buffer symbols = STBTTPackedchar.malloc(SYMBOLS_COUNT);
             boolean packed;
             STBTTPackContext context = STBTTPackContext.malloc();
             try {
@@ -397,7 +405,8 @@ public final class RenderSystem {
                     int oversample = pixelHeight > 90 ? 1 : pixelHeight > 60 ? 2 : OVERSAMPLE;
                     stbtt_PackSetOversampling(context, oversample, oversample);
                     packed = stbtt_PackFontRange(context, fontData, 0, pixelHeight, LATIN_FIRST, latin)
-                            && stbtt_PackFontRange(context, fontData, 0, pixelHeight, CYRILLIC_FIRST, cyrillic);
+                            && stbtt_PackFontRange(context, fontData, 0, pixelHeight, CYRILLIC_FIRST, cyrillic)
+                            && stbtt_PackFontRange(context, fontData, 0, pixelHeight, SYMBOLS_FIRST, symbols);
                     stbtt_PackEnd(context);
                 }
             } finally {
@@ -407,6 +416,7 @@ public final class RenderSystem {
             if (!packed) {
                 latin.free();
                 cyrillic.free();
+                symbols.free();
                 MemoryUtil.memFree(bitmap);
                 continue;
             }
@@ -423,7 +433,7 @@ public final class RenderSystem {
                 baseline = ascent.get(0) * stbtt_ScaleForPixelHeight(fontInfo, pixelHeight);
             }
 
-            Atlas atlas = new Atlas(fontId, texture, size, latin, cyrillic, baseline);
+            Atlas atlas = new Atlas(fontId, texture, size, latin, cyrillic, symbols, baseline);
             ATLASES.put(key, atlas);
             LOGGER.info("Baked font atlas: {} {}px, {}x{}", fontId, pixelHeight, size, size);
             return atlas;
@@ -460,6 +470,9 @@ public final class RenderSystem {
         if (codePoint >= CYRILLIC_FIRST && codePoint < CYRILLIC_FIRST + CYRILLIC_COUNT) {
             return atlas.cyrillic().get(codePoint - CYRILLIC_FIRST);
         }
+        if (codePoint >= SYMBOLS_FIRST && codePoint < SYMBOLS_FIRST + SYMBOLS_COUNT) {
+            return atlas.symbols().get(codePoint - SYMBOLS_FIRST);
+        }
         return atlas.latin().get('?' - LATIN_FIRST);
     }
 
@@ -485,6 +498,9 @@ public final class RenderSystem {
                 } else if (codePoint >= CYRILLIC_FIRST && codePoint < CYRILLIC_FIRST + CYRILLIC_COUNT) {
                     range = atlas.cyrillic();
                     index = codePoint - CYRILLIC_FIRST;
+                } else if (codePoint >= SYMBOLS_FIRST && codePoint < SYMBOLS_FIRST + SYMBOLS_COUNT) {
+                    range = atlas.symbols();
+                    index = codePoint - SYMBOLS_FIRST;
                 } else {
                     range = atlas.latin();
                     index = '?' - LATIN_FIRST;
@@ -617,7 +633,14 @@ public final class RenderSystem {
     public static void drawTexture(String name, double x, double y,
                                    double w, double h,
                                    float u0, float v0, float u1, float v1) {
-        int tex = iconTexture(name);
+        drawGlTexture(iconTexture(name), x, y, w, h, u0, v0, u1, v1);
+    }
+
+    /** Тот же квад, но по готовому GL id (например скин из ванильного менеджера). */
+    public static void drawGlTexture(int texId, double x, double y,
+                                     double w, double h,
+                                     float u0, float v0, float u1, float v1) {
+        int tex = texId;
         if (tex == 0 || !initialized) return;
 
         MinecraftClient client = MinecraftClient.getInstance();

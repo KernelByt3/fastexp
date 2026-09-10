@@ -219,25 +219,18 @@ public class HudRenderer {
     private static void drawWatermark(float[] r) {
         float x = r[0], y = r[1], w = r[2], h = r[3];
         float size = 21.0f, padX = 9.0f, padY = 5.0f, dot = 8.0f, gap = 6.0f;
-        long t = System.currentTimeMillis();
-        float pulse = 0.75f + 0.25f * (float)Math.sin(t * 0.004);
-
-        
-        UiRender.roundRect(x-2, y-2, w+4, h+4, 9,
-                new float[]{0.54f,0.17f,0.89f,0.10f* pulse},
-                new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
         UiRender.roundRect(x, y, w, h, 8,
-                new float[]{0.06f,0.06f,0.11f,0.94f},
-                new float[]{1,1,1,0.09f}, 1,
-                new float[]{0.54f,0.17f,0.89f,0.20f}, 6);
+                new float[]{0.06f,0.06f,0.09f,0.94f},
+                new float[]{1,1,1,0.08f}, 1,
+                new float[]{0,0,0,0}, 0);
 
         float dotX = x + padX;
         float dotY = y + (h - dot) / 2;
         UiRender.roundRect(dotX, dotY, dot, dot, dot/2,
-                new float[]{0.61f,0.27f,0.98f,1f},
+                new float[]{1f,1f,1f,0.9f},
                 new float[]{0,0,0,0},0,
-                new float[]{0.61f,0.27f,0.98f,0.32f* pulse}, 4);
+                new float[]{0,0,0,0},0);
 
         RenderSystem.drawText("Nefor", x + padX + dot + gap, y + padY + 1, size, 0xFFFFFFFF);
         
@@ -267,9 +260,9 @@ public class HudRenderer {
         enabled.sort(Comparator.comparing(Module::getName));
 
         UiRender.roundRect(x, y, w, h, 8,
-                new float[]{0.06f,0.06f,0.11f,0.94f},
-                new float[]{1,1,1,0.08f}, 1,
-                new float[]{0.54f,0.17f,0.89f,0.16f}, 6);
+                new float[]{0.06f,0.06f,0.09f,0.94f},
+                new float[]{1,1,1,0.07f}, 1,
+                new float[]{0,0,0,0}, 0);
         
         UiRender.roundRect(x, y, w, 18, 8, new float[]{1,1,1,0.04f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         RenderSystem.drawText("KEYBINDS", x+10, y+5, 8f, 0xFF9A9AA6);
@@ -280,9 +273,7 @@ public class HudRenderer {
             RenderSystem.drawText(name, x+10, cy+2, 11.5f, 0xFFEAEAF2);
             float kw = RenderSystem.textWidth(key, 9f)+8;
             UiRender.roundRect(x+w-10-kw, cy-1, kw, 14, 4, new float[]{1,1,1,0.08f}, new float[]{1,1,1,0.10f},1, new float[]{0,0,0,0},0);
-            RenderSystem.drawText(key, x+w-10-kw+4, cy+2, 9f, 0xFF7D9BFF);
-            
-            UiRender.roundRect(x+6, cy+6, 3,3,1.5f, new float[]{0.36f,0.49f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0.36f,0.49f,1f,0.35f},3);
+            RenderSystem.drawText(key, x+w-10-kw+4, cy+2, 9f, 0xFFB9B9C4);
             cy += 18;
         }
     }
@@ -296,9 +287,9 @@ public class HudRenderer {
         float textSize = 12.0f, rowH = 22.0f, padX = 9.0f;
 
         UiRender.roundRect(x, y, w, h, 7,
-                new float[]{0.07f, 0.06f, 0.12f, 0.92f},
-                new float[]{1, 1, 1, 0.10f}, 1,
-                new float[]{0.54f, 0.17f, 0.89f, 0.14f}, 4);
+                new float[]{0.06f,0.06f,0.09f,0.92f},
+                new float[]{1, 1, 1, 0.08f}, 1,
+                new float[]{0,0,0,0}, 0);
 
         float cy = y + 4.0f;
         for (String[] row : rows) {
@@ -317,8 +308,6 @@ public class HudRenderer {
         ClientPlayerEntity player = client.player;
         List<String[]> rows = new ArrayList<>();
         if (player == null) return rows;
-
-        rows.add(new String[]{"Атака", formatPct(player.getAttackCooldownProgress(0.0f))});
 
         Map<String, Float> items = new LinkedHashMap<>();
         collectCooldown(player, player.getMainHandStack(), items);
@@ -343,46 +332,100 @@ public class HudRenderer {
 
     
     private static float prevHp = 20f;
-    private static String lastName = "";
+    private static int lastTargetId = -1;
+    private static float pop = 0f;
     private static float slide = 0f;
+    private static float flash = 0f;
+
+    private static void drawHead(PlayerEntity p, float x, float y, float size) {
+        try {
+            var client = MinecraftClient.getInstance();
+            if (client.getNetworkHandler() == null) return;
+            var entry = client.getNetworkHandler().getPlayerListEntry(p.getUuid());
+            if (entry == null) return;
+            var tex = client.getTextureManager().getTexture(entry.getSkinTextures().texturePath());
+            int glId = ((net.minecraft.client.texture.AbstractTexture) tex).getGlId();
+            if (glId == 0) return;
+            RenderSystem.drawGlTexture(glId, x, y, size, size, 8f / 64f, 8f / 64f, 16f / 64f, 16f / 64f);
+            RenderSystem.drawGlTexture(glId, x, y, size, size, 40f / 64f, 8f / 64f, 48f / 64f, 16f / 64f);
+        } catch (Exception ignored) {
+        }
+    }
+
     private static void drawTargetHud(MinecraftClient client, float[] r) {
         float x = r[0], y = r[1], w = r[2], h = r[3];
         KillAura ka = ModuleManager.get(KillAura.class);
-        LivingEntity target = ka==null? null: ka.getTarget();
-        boolean has = target instanceof PlayerEntity;
-        slide += ((has?1:0)-slide)*0.18f;
-        if(slide<0.02f) return;
-        
-        x = x - (1-slide)*14;
-
-        PlayerEntity p = target instanceof PlayerEntity pl ? pl : null;
-        if(p==null){
-            if(slide<0.9f) return;
+        LivingEntity target = ka == null ? null : ka.getTarget();
+        boolean has = target instanceof PlayerEntity && target.isAlive() && !target.isRemoved();
+        slide += ((has ? 1 : 0) - slide) * 0.18f;
+        if (slide < 0.02f) {
+            lastTargetId = -1;
+            return;
         }
 
-        UiRender.roundRect(x, y, w, h, 9,
-                new float[]{0.06f,0.06f,0.11f,0.96f},
-                new float[]{1,1,1,0.09f}, 1,
-                new float[]{0.54f,0.17f,0.89f,0.20f * slide}, 7);
+        int tid = has ? target.getId() : -1;
+        if (tid != lastTargetId) {
+            lastTargetId = tid;
+            pop = 0f;
+        }
+        pop += (1f - pop) * 0.22f;
 
-        float av = 36f; float avX = x+9; float avY = y+(h-av)/2;
-        UiRender.roundRect(avX-1, avY-1, av+2, av+2, 7, new float[]{0.04f,0.03f,0.08f,0.95f}, new float[]{1,1,1,0.12f},1, new float[]{0,0,0,0},0);
-        
-        UiRender.roundRect(avX, avY, av, av, 6, new float[]{0.14f,0.12f,0.22f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
+        x = x - (1 - slide) * 18;
+        float pw = w * (0.82f + 0.18f * pop);
+        float ph = h * (0.88f + 0.12f * pop);
+        float px = x + (w - pw);
+        float py = y + (h - ph) / 2f;
 
-        if(p!=null){
+        UiRender.roundRect(px, py, pw, ph, 9,
+                new float[]{0.055f, 0.055f, 0.085f, 0.96f},
+                new float[]{1, 1, 1, 0.08f}, 1,
+                new float[]{0, 0, 0, 0}, 0);
+
+        PlayerEntity p = has ? (PlayerEntity) target : null;
+        float av = 36f;
+        float avX = px + 9;
+        float avY = py + (ph - av) / 2;
+        // рамка аватара
+        UiRender.roundRect(avX - 1, avY - 1, av + 2, av + 2, 7,
+                new float[]{0.03f, 0.03f, 0.06f, 0.95f},
+                new float[]{1, 1, 1, 0.12f}, 1,
+                new float[]{0, 0, 0, 0}, 0);
+        // подложка
+        UiRender.roundRect(avX, avY, av, av, 6,
+                new float[]{0.13f, 0.12f, 0.18f, 1f},
+                new float[]{0, 0, 0, 0}, 0,
+                new float[]{0, 0, 0, 0}, 0);
+
+        if (p != null) {
+            // голова из скина (лицо + шляпа)
+            drawHead(p, avX, avY, av);
+
             String name = p.getName().getString();
-            if(!name.equals(lastName)){ lastName=name; }
-            RenderSystem.drawText(name, x+av+16, y+9, 13.5f, 0xFFFFFFFF);
-            String sub = "HP  •  "+String.format("%.1f", target.getHealth());
-            RenderSystem.drawText(sub, x+av+16, y+23, 8.5f, 0xFF9A9AA6);
+            if (name.length() > 14) name = name.substring(0, 14);
+            RenderSystem.drawText(name, px + av + 16, py + 8, 13f, 0xFFFFFFFF);
 
-            float hp = target.getHealth(); float max = target.getMaxHealth();
-            prevHp += (hp - prevHp)*0.18f;
-            float frac = Math.max(0, Math.min(1, prevHp / Math.max(1,max)));
-            float barX = x+av+16; float barW = w-(av+16)-10; float barY = y+34;
-            int hpColor = frac>0.55f? 0xFF4BE37A: frac>0.28f? 0xFFE3C53B: 0xFFE5484B;
-            drawBar(barX, barY, barW, 7f, frac, hpColor);
+            float hp = target.getHealth();
+            float max = Math.max(1, target.getMaxHealth());
+            if (hp < prevHp - 0.5f) flash = 1f;
+            flash += (0f - flash) * 0.15f;
+            prevHp += (hp - prevHp) * 0.18f;
+            float frac = Math.max(0, Math.min(1, prevHp / max));
+
+            String sub = String.format("%.1f HP", Math.max(0, hp));
+            RenderSystem.drawText(sub, px + av + 16, py + 22, 9f, 0xFF9A9AA6);
+
+            float barX = px + av + 16;
+            float barW = pw - (av + 16) - 10;
+            float barY = py + 34;
+            int hpColor = frac > 0.55f ? 0xFF4BE37A : frac > 0.28f ? 0xFFE3C53B : 0xFFE5484B;
+            drawBar(barX, barY, barW, 6f, frac, hpColor);
+            if (flash > 0.03f) {
+                UiRender.roundRect(px, py, pw, ph, 9,
+                        new float[]{0, 0, 0, 0}, new float[]{1, 1, 1, 0.35f * flash}, 1,
+                        new float[]{0, 0, 0, 0}, 0);
+            }
+        } else if (slide > 0.5f && lastTargetId != -1) {
+            RenderSystem.drawText("...", px + av + 16, py + 12, 13f, 0xFF6E6E78);
         }
     }
 
@@ -450,7 +493,7 @@ public class HudRenderer {
         if (hud.cooldowns.getValue()) drawCooldowns(client, rects.get("cooldowns"));
         if (hud.targetHud.getValue()) drawTargetHud(client, rects.get("targethud"));
 
-        RenderSystem.drawText("HUD редактор (H — выкл): зажми ЛКМ на элементе и тащи по сетке 5px", 8, 8, 13, 0xFF9B6BFF);
+        RenderSystem.drawText("HUD editor (H off): hold LMB and drag on 5px grid", 8, 8, 13, 0xFFB9B9C4);
 
         for (String name : ELEMENTS) {
             float[] r = rects.get(name);
@@ -458,10 +501,10 @@ public class HudRenderer {
             boolean isDragging = name.equals(dragging);
             UiRender.roundRect(r[0], r[1], r[2], r[3], 7,
                     isDragging
-                            ? new float[]{0.30f, 0.11f, 0.50f, 0.85f}
+                            ? new float[]{1f, 1f, 1f, 0.14f}
                             : new float[]{0.07f, 0.06f, 0.12f, 0.55f},
-                    new float[]{0.61f, 0.27f, 0.98f, 0.6f}, 1.5f,
-                    new float[]{0.54f, 0.17f, 0.89f, 0.15f}, 4);
+                    new float[]{1, 1, 1, 0.25f}, 1.5f,
+                    new float[]{0, 0, 0, 0}, 0);
 
             String label = switch (name) {
                 case "watermark" -> "Watermark";
