@@ -31,8 +31,8 @@ public final class RotationUtil {
     private static Vec3d lockedAimPoint = null;
     private static Entity lockedTarget = null;
 
-    // сглаженная точка прицеливания: углы ползут к голове экспонентой,
-    // а не прыгают за хитбоксом каждый тик (убирает дёргание вверх-вниз)
+    
+    
     private static Entity smoothTarget = null;
     private static float smoothYaw = 0f;
     private static float smoothPitch = 0f;
@@ -45,11 +45,11 @@ public final class RotationUtil {
         setRotationRaw(yaw, pitch, moveCorrectionEnabled);
     }
 
-    /** Без GCD — для SmoothRotationManager (GCD уже применён). Не врапаем yaw чтобы bypass AimModulo360 (yaw>360). */
+    
     public static void setRotationRaw(float yaw, float pitch, boolean moveCorrectionEnabled) {
         prevTargetYaw = isRotating ? targetYaw : (mc.player != null ? mc.player.getYaw() : yaw);
         prevTargetPitch = isRotating ? targetPitch : (mc.player != null ? mc.player.getPitch() : pitch);
-        targetYaw = yaw; // unwrapped — Grim AimModulo360 чекает только yaw в [-360,360]
+        targetYaw = yaw; 
         targetPitch = MathHelper.clamp(pitch, -90.0F, 90.0F);
         moveCorrection = moveCorrectionEnabled;
         isRotating = true;
@@ -105,10 +105,10 @@ public final class RotationUtil {
         return getRotations(entity, 0.0);
     }
 
-    /**
-     * @param leadSec упреждение по скорости цели (0 = без предикта).
-     * Стрейфящуюся цель прицел ведёт в точку встречи, а не отстаёт.
-     */
+    
+
+
+
     public static float[] getRotations(Entity entity, double leadSec) {
         if (mc.player == null || entity == null) return new float[]{0.0f, 0.0f};
 
@@ -120,13 +120,13 @@ public final class RotationUtil {
             }
         }
 
-        // всегда голова — одна стабильная точка вместо скачущих грудь/ноги/ближайшая
+        
         float[] raw = calculateAngles(headPoint(box));
         lockedAimPoint = headPoint(box);
         lockedTarget = entity;
 
-        // EMA-сглаживание ТОЛЬКО pitch: yaw идёт сырым чтобы доворот
-        // успевал за стрейфом цели, а вертикаль ползёт к голове плавно.
+        
+        
         if (entity != smoothTarget) {
             smoothTarget = entity;
             smoothYaw = raw[0];
@@ -139,7 +139,7 @@ public final class RotationUtil {
     }
     public static void updateLockedPoint(Entity entity) {
         if (entity == null) return;
-        // точка всегда голова — просто обновляем кэш
+        
         lockedAimPoint = headPoint(entity);
         lockedTarget = entity;
     }
@@ -151,7 +151,7 @@ public final class RotationUtil {
     private static Vec3d headPoint(Box box) {
         double cx = (box.minX + box.maxX) * 0.5;
         double cz = (box.minZ + box.maxZ) * 0.5;
-        // голова: чуть ниже верха хитбокса, не ниже центра чтобы не уйти в тело
+        
         double y = Math.max(box.maxY - 0.15, (box.minY + box.maxY) * 0.5);
         return new Vec3d(cx, y, cz);
     }
@@ -181,7 +181,7 @@ public final class RotationUtil {
     public static boolean isLookingAt(Entity entity, float maxAngle) {
         if (entity == null || mc.player == null) return false;
 
-        // Проверяем против головы — той же точки, куда считает getRotations
+        
         Vec3d checkPoint = headPoint(entity);
 
         float[] needed = calculateAngles(checkPoint);

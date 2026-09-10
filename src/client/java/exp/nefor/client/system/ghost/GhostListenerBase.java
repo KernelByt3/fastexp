@@ -1,9 +1,9 @@
 package exp.nefor.client.system.ghost;
 
-/**
- * Общая база гостевых листенеров: закрытие, ping, cookie.
- * getPhase()/getSide() берутся из default-методов подинтерфейсов.
- */
+
+
+
+
 public abstract class GhostListenerBase implements net.minecraft.network.listener.ClientPacketListener {
 
     protected GhostConnection ghost;

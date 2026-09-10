@@ -19,7 +19,7 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
     private double mouseY;
     private final long openMs = System.currentTimeMillis();
 
-    /** Сдвиг появления кнопки (stagger): клики считают тот же сдвиг. */
+    
     private float btnDy(int i) {
         float e = exp.nefor.client.util.AnimationUtil.openT(openMs, 60 + i * 45L, 260L);
         return (1f - e) * 16f;
@@ -46,7 +46,7 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Drawn from the end-of-frame hook instead: see nefor$renderOverlay.
+        
     }
 
     @Override

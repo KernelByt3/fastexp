@@ -4,10 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.UUID;
 
-/**
- * Оффлайн-сессия бота: ник + UUID. Генератор для пачки ботов.
- * Работает на серверах без авторизации (online-mode такое не примет).
- */
+
+
+
+
 public final class GhostSession {
 
     private static final String[] PREFIXES = {
@@ -24,12 +24,12 @@ public final class GhostSession {
         this.uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + this.nick).getBytes(StandardCharsets.UTF_8));
     }
 
-    /** Случайная сессия вида Steve4821. */
+    
     public static GhostSession generate() {
         return new GhostSession(PREFIXES[RND.nextInt(PREFIXES.length)] + (1000 + RND.nextInt(9000)));
     }
 
-    /** Сессия с заданным ником (пусто/рандом = сгенерировать). */
+    
     public static GhostSession of(String nick) {
         if (nick == null || nick.isBlank()) return generate();
         return new GhostSession(nick.trim());

@@ -22,7 +22,7 @@ public final class SakuraBackground {
         drawHaze(w, h, seconds);
     }
 
-    // === Мягкое фиолетовое небо ===
+    
     private static void drawSky(int w, int h) {
         float[][] stops = {
                 {0.020f, 0.012f, 0.050f},
@@ -38,7 +38,7 @@ public final class SakuraBackground {
             double t = i / (double) (strips - 1) * (stops.length - 1);
             int idx = (int) Math.min(stops.length - 2, Math.floor(t));
             double frac = t - idx;
-            frac = frac * frac * (3 - 2 * frac); // smoothstep
+            frac = frac * frac * (3 - 2 * frac); 
 
             float r = (float) lerp(stops[idx][0], stops[idx + 1][0], frac);
             float g = (float) lerp(stops[idx][1], stops[idx + 1][1], frac);
@@ -55,7 +55,7 @@ public final class SakuraBackground {
         }
     }
 
-    // === Лёгкие фиолетовые ореолы ===
+    
     private static void drawAurora(int w, int h, double seconds) {
         double shift1 = Math.sin(seconds * 0.16) * 18.0;
         double shift2 = Math.cos(seconds * 0.13) * 14.0;
@@ -88,13 +88,13 @@ public final class SakuraBackground {
         );
     }
 
-    // === Мягкая "луна" / светящийся акцент ===
+    
     private static void drawMoon(int w, int h, double seconds) {
         double x = w * 0.82 + Math.sin(seconds * 0.18) * 5.0;
         double y = h * 0.16 + Math.cos(seconds * 0.16) * 4.0;
         double breathe = 0.5 + 0.5 * Math.sin(seconds * 0.30);
 
-        // внешний ореол
+        
         UiRender.roundRect(
                 x - 86, y - 86,
                 172, 172,
@@ -104,7 +104,7 @@ public final class SakuraBackground {
                 new float[]{0.88f, 0.78f, 1.00f, (float) (0.12 + breathe * 0.08)}, 80
         );
 
-        // тело
+        
         UiRender.roundRect(
                 x - 22, y - 22,
                 44, 44,
@@ -115,7 +115,7 @@ public final class SakuraBackground {
         );
     }
 
-    // === Редкие маленькие звёзды ===
+    
     private static void drawStars(int w, int h, double seconds) {
         Random rnd = new Random(4242L);
         int count = 42;
@@ -146,7 +146,7 @@ public final class SakuraBackground {
         }
     }
 
-    // === Небольшой нижний туман для глубины ===
+    
     private static void drawHaze(int w, int h, double seconds) {
         double wave = Math.sin(seconds * 0.10) * 8.0;
 

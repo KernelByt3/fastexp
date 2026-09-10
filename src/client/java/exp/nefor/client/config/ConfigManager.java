@@ -41,13 +41,13 @@ public class ConfigManager {
         try {
             Path path = path();
             if (!Files.exists(path)) {
-                // миграция со старого пути
+                
                 Path old = FabricLoader.getInstance().getGameDir().resolve("nefor").resolve("config").resolve("nefor.json");
                 if (Files.exists(old) && current.equals("nefor")) {
                     Files.createDirectories(path.getParent());
                     Files.copy(old, path);
                 } else {
-                    // первого запуска нет — создаём дефолтный конфиг автоматически
+                    
                     loading = false;
                     save();
                     loading = true;

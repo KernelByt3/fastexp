@@ -4,37 +4,24 @@ import exp.nefor.client.gui.CustomRenderedScreen;
 import exp.nefor.client.gui.UiRender;
 import exp.nefor.client.render.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.network.ClientConnection;
 import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Заход на сервер полностью через наш рендер: фон, nefor client,
- * статус, progress bar, кнопка отмены. Ваниллу гасим целиком.
+ * статус, progress bar, кнопка отмены. Ваниллу гасим целиком,
+ * клики/ESC едут через ScreenBackgroundMixin.
  */
 @Mixin(ConnectScreen.class)
 public abstract class ConnectScreenMixin implements CustomRenderedScreen {
 
-    @Shadow
-    volatile ClientConnection connection;
-    @Shadow
-    volatile boolean connectingCancelled;
-    @Shadow
-    @Final
-    Screen parent;
     @Shadow
     private Text status;
 
@@ -43,46 +30,12 @@ public abstract class ConnectScreenMixin implements CustomRenderedScreen {
     @Unique
     private boolean nefor$widgetsCleared = false;
 
-    @Unique
-    private static int nefor$cancelX(int w) { return w / 2 - 90; }
-    @Unique
-    private static int nefor$cancelY(int h) { return h / 2 + 44; }
-
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void nefor$killVanilla(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         ci.cancel();
         if (!nefor$widgetsCleared) {
             nefor$widgetsCleared = true;
             ((ScreenAccessor) (Object) this).nefor$clearChildren();
-        }
-    }
-
-    @Unique
-    private void nefor$abort() {
-        connectingCancelled = true;
-        try {
-            if (connection != null) connection.disconnect(ConnectScreen.ABORTED_TEXT);
-        } catch (Exception ignored) {
-        }
-        MinecraftClient.getInstance().setScreen(parent);
-    }
-
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void nefor$click(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        int w = client.getWindow().getScaledWidth();
-        int h = client.getWindow().getScaledHeight();
-        if (UiRender.inBox(click.x(), click.y(), nefor$cancelX(w), nefor$cancelY(h), 180, 22)) {
-            nefor$abort();
-            cir.setReturnValue(true);
-        }
-    }
-
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void nefor$keys(KeyInput ki, CallbackInfoReturnable<Boolean> cir) {
-        if (ki.key() == GLFW.GLFW_KEY_ESCAPE) {
-            nefor$abort();
-            cir.setReturnValue(true);
         }
     }
 
@@ -119,7 +72,7 @@ public abstract class ConnectScreenMixin implements CustomRenderedScreen {
                 new float[]{1, 1, 1, 0.9f}, new float[]{0, 0, 0, 0}, 0,
                 new float[]{0, 0, 0, 0}, 0);
 
-        boolean hov = UiRender.inBox(mx, my, nefor$cancelX(w), nefor$cancelY(h), 180, 22);
-        UiRender.button(nefor$cancelX(w), nefor$cancelY(h), 180, 22, "Cancel", hov, false);
+        boolean hov = UiRender.inBox(mx, my, w / 2 - 90, h / 2 + 44, 180, 22);
+        UiRender.button(w / 2 - 90, h / 2 + 44, 180, 22, "Cancel", hov, false);
     }
 }

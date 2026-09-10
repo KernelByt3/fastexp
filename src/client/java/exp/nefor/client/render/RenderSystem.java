@@ -595,7 +595,7 @@ public final class RenderSystem {
         return ICON_SIZES.getOrDefault(name, new int[]{1, 1});
     }
 
-    /** Fills the target rect with the texture, cropping it like CSS background-size: cover. */
+    
     public static void drawTextureCover(String name, double x, double y, double w, double h) {
         int[] size = getTextureSize(name);
         float texAspect = (float) size[0] / Math.max(1, size[1]);

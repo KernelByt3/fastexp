@@ -32,10 +32,10 @@ public class HudRenderer {
 
     public static final String[] ELEMENTS = {"watermark", "keybinds", "cooldowns", "targethud"};
 
-    // filled every frame with the on-screen rects {x,y,w,h}
+    
     public static final Map<String, float[]> lastRects = new java.util.HashMap<>();
 
-    // drag state shared with HudEditorScreen
+    
     public static boolean editMode = false;
     public static String dragging = null;
     public static float dragOffX = 0;
@@ -77,7 +77,7 @@ public class HudRenderer {
         float sh = client.getWindow().getScaledHeight();
         Map<String, float[]> map = new java.util.HashMap<>();
 
-        // Watermark — считаем полную ширину с tag + fps/ping
+        
         {
             float size = 21.0f, padX = 9.0f, padY = 5.0f, dot = 8.0f, gap = 6.0f;
             String base = "Nefor";
@@ -101,7 +101,7 @@ public class HudRenderer {
                     w, h});
         }
 
-        // Keybinds — считаем по модулям правильно (имя + ключ отдельно)
+        
         {
             List<Module> enabled = new ArrayList<>();
             for (Module m : ModuleManager.getModules()) if(m.isEnabled() && m.getKeyCode()!=GLFW.GLFW_KEY_UNKNOWN) enabled.add(m);
@@ -120,7 +120,7 @@ public class HudRenderer {
                     panelW, panelH});
         }
 
-        // Cooldowns
+        
         {
             List<String[]> rows = collectCooldowns(client);
             float textSize = 12.0f, rowH = 22.0f, padX = 9.0f, gap = 6.0f;
@@ -139,7 +139,7 @@ public class HudRenderer {
                     panelW, panelH});
         }
 
-        // TargetHud
+        
         {
             float w = 172.0f, h = 54.0f;
             float[] p = hud.getPos("targethud");
@@ -186,7 +186,7 @@ public class HudRenderer {
     }
 
     private static void drawBar(float x, float y, float w, float h, float fraction, int color) {
-        // фон
+        
         UiRender.roundRect(x, y, w, h, h / 2,
                 new float[]{0.04f, 0.03f, 0.08f, 0.92f},
                 new float[]{1,1,1,0.06f},1,
@@ -194,13 +194,13 @@ public class HudRenderer {
         float f = Math.max(0,Math.min(1,fraction));
         float fw = w * f;
         if (fw > 0.8f) {
-            // fill + glow — без shared static, сразу по fraction
+            
             float glow = 0f;
             if (f >= 0.99f) glow = 0.35f + 0.15f * (float)Math.sin(System.currentTimeMillis()*0.01);
             UiRender.roundRect(x, y, fw, h, h / 2,
                     toFloats(color), new float[]{0, 0, 0, 0}, 0,
                     new float[]{toFloats(color)[0], toFloats(color)[1], toFloats(color)[2], glow}, glow>0?5:0);
-            // блик сверху
+            
             UiRender.roundRect(x, y, fw, h*0.45f, h/2, new float[]{1,1,1,0.14f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         } else if (fw > 0.4f) {
             UiRender.roundRect(x, y, fw, h, h / 2,
@@ -213,7 +213,7 @@ public class HudRenderer {
         return (int) (v * 100) + "%";
     }
 
-    // === Watermark (обновлён) ===
+    
     private static float lastFps = 60;
     private static void drawWatermark(float[] r) {
         float x = r[0], y = r[1], w = r[2], h = r[3];
@@ -221,7 +221,7 @@ public class HudRenderer {
         long t = System.currentTimeMillis();
         float pulse = 0.75f + 0.25f * (float)Math.sin(t * 0.004);
 
-        // glow
+        
         UiRender.roundRect(x-2, y-2, w+4, h+4, 9,
                 new float[]{0.54f,0.17f,0.89f,0.10f* pulse},
                 new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
@@ -239,10 +239,10 @@ public class HudRenderer {
                 new float[]{0.61f,0.27f,0.98f,0.32f* pulse}, 4);
 
         RenderSystem.drawText("Nefor", x + padX + dot + gap, y + padY + 1, size, 0xFFFFFFFF);
-        // small client tag
+        
         String tag = "client";
         RenderSystem.drawText(tag, x + padX + dot + gap + RenderSystem.textWidth("Nefor", size)+3, y + padY + 8, 9f, 0xFF9A9AA6);
-        // separator + fps/ping
+        
         try{
             var mc = MinecraftClient.getInstance();
             int fps = mc.getCurrentFps();
@@ -256,7 +256,7 @@ public class HudRenderer {
         }catch(Exception ignored){}
     }
 
-    // === Keybinds (обновлён) ===
+    
     private static void drawKeybinds(MinecraftClient client, float[] r) {
         float x = r[0], y = r[1], w = r[2], h = r[3];
         List<Module> enabled = new ArrayList<>();
@@ -268,7 +268,7 @@ public class HudRenderer {
                 new float[]{0.06f,0.06f,0.11f,0.94f},
                 new float[]{1,1,1,0.08f}, 1,
                 new float[]{0.54f,0.17f,0.89f,0.16f}, 6);
-        // header
+        
         UiRender.roundRect(x, y, w, 18, 8, new float[]{1,1,1,0.04f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         RenderSystem.drawText("KEYBINDS", x+10, y+5, 8f, 0xFF9A9AA6);
         float cy = y + 20;
@@ -279,13 +279,13 @@ public class HudRenderer {
             float kw = RenderSystem.textWidth(key, 9f)+8;
             UiRender.roundRect(x+w-10-kw, cy-1, kw, 14, 4, new float[]{1,1,1,0.08f}, new float[]{1,1,1,0.10f},1, new float[]{0,0,0,0},0);
             RenderSystem.drawText(key, x+w-10-kw+4, cy+2, 9f, 0xFF7D9BFF);
-            // dot
+            
             UiRender.roundRect(x+6, cy+6, 3,3,1.5f, new float[]{0.36f,0.49f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0.36f,0.49f,1f,0.35f},3);
             cy += 18;
         }
     }
 
-    // === Cooldowns ===
+    
     private static void drawCooldowns(MinecraftClient client, float[] r) {
         float x = r[0], y = r[1], w = r[2], h = r[3];
         List<String[]> rows = collectCooldowns(client);
@@ -339,7 +339,7 @@ public class HudRenderer {
         }
     }
 
-    // === TargetHud (обновлён + анимация) ===
+    
     private static float prevHp = 20f;
     private static String lastName = "";
     private static float slide = 0f;
@@ -350,7 +350,7 @@ public class HudRenderer {
         boolean has = target instanceof PlayerEntity;
         slide += ((has?1:0)-slide)*0.18f;
         if(slide<0.02f) return;
-        // slide from left
+        
         x = x - (1-slide)*14;
 
         PlayerEntity p = target instanceof PlayerEntity pl ? pl : null;
@@ -365,7 +365,7 @@ public class HudRenderer {
 
         float av = 36f; float avX = x+9; float avY = y+(h-av)/2;
         UiRender.roundRect(avX-1, avY-1, av+2, av+2, 7, new float[]{0.04f,0.03f,0.08f,0.95f}, new float[]{1,1,1,0.12f},1, new float[]{0,0,0,0},0);
-        // inner avatar gloss
+        
         UiRender.roundRect(avX, avY, av, av, 6, new float[]{0.14f,0.12f,0.22f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
         if(p!=null){
@@ -384,7 +384,7 @@ public class HudRenderer {
         }
     }
 
-    // === Drag editor — фикс: используем scaled координаты ===
+    
     public static void pollDrag(MinecraftClient client, float mxRaw, float myRaw, boolean down) {
         Hud hud = ModuleManager.get(Hud.class);
         if (hud == null) { wasDown = down; return; }
@@ -397,11 +397,11 @@ public class HudRenderer {
         lastRects.putAll(rects);
 
         if (down && !wasDown) {
-            // приоритет — верхний элемент (последний по списку рендера)
+            
             for (int i = ELEMENTS.length-1; i>=0; i--) {
                 String name = ELEMENTS[i];
                 float[] r = lastRects.get(name);
-                // пропускаем скрытые элементы
+                
                 boolean visible = switch(name){
                     case "watermark" -> hud.watermark.getValue();
                     case "keybinds" -> hud.keybinds.getValue();
@@ -442,7 +442,7 @@ public class HudRenderer {
         lastRects.clear();
         lastRects.putAll(rects);
 
-        // показываем реальные элементы, чтобы было видно что тащим
+        
         if (hud.watermark.getValue()) drawWatermark(rects.get("watermark"));
         if (hud.keybinds.getValue()) drawKeybinds(client, rects.get("keybinds"));
         if (hud.cooldowns.getValue()) drawCooldowns(client, rects.get("cooldowns"));

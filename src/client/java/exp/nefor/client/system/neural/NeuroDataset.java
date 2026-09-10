@@ -9,10 +9,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Датасет для нейро-ауры: собирает как ты наводишься мышью на точки в тренировке.
- * Каждая запись = deltaYaw, deltaPitch, dist, velocity -> время реакции
- */
+
+
+
+
 public final class NeuroDataset {
     public record Sample(float deltaYaw, float deltaPitch, float dist, float speed, long reactionMs, boolean hit){}
 
@@ -32,7 +32,7 @@ public final class NeuroDataset {
     public static void clear(){ SAMPLES.clear(); forceSave(); }
 
     public static void save() {
-        // троттлинг записи: тренировка сыпет сэмплами каждый тик
+        
         if (System.currentTimeMillis() - lastSaveMs < 2000) return;
         forceSave();
     }

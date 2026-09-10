@@ -16,7 +16,8 @@
 		"NoRenderMixin",
 		"ScreenBackgroundMixin",
 		"ConnectScreenMixin",
-		"ScreenAccessor"
+		"ScreenAccessor",
+		"ConnectScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

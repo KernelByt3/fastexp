@@ -4,12 +4,12 @@ import exp.nefor.client.util.Mathematics;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 
-/**
- * Плавный менеджер ротаций — отдельный файл.
- * Убирает дергание: интерполяция + GCD + clamp скорости.
- * Вызывать каждый тик: SmoothRotationManager.tick()
- * Устанавливать цель: smoothlyRotateTo(yaw, pitch, profile)
- */
+
+
+
+
+
+
 public final class SmoothRotationManager {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -20,11 +20,11 @@ public final class SmoothRotationManager {
     private static boolean active = false;
     private static long lastUpdate = 0;
     private static RotationProfile profile = RotationProfile.VANILLA;
-    // плавный возврат взгляда: после потери цели глайд к камере вместо снапа
+    
     private static boolean returning = false;
     private static long returnStart = 0;
 
-    // для сглаживания
+    
     private static float velocityYaw = 0;
     private static float velocityPitch = 0;
 
@@ -45,7 +45,7 @@ public final class SmoothRotationManager {
         returning = false;
     }
     public static void setTargetWithFactor(float yaw, float pitch, float factor){
-        // кастомный фактор из нейро-модели — без привязки к профилю
+        
         float wrappedTarget = MathHelper.wrapDegrees(yaw);
         if (!active) {
             currentYaw = mc.player != null ? mc.player.getYaw() : wrappedTarget;
@@ -55,17 +55,17 @@ public final class SmoothRotationManager {
         float delta = MathHelper.wrapDegrees(wrappedTarget - MathHelper.wrapDegrees(currentYaw));
         targetYaw = currentYaw + delta;
         targetPitch = MathHelper.clamp(pitch, -90f, 90f);
-        // временно подменяем smoothing
+        
         float old = profile.smoothing;
-        profile = RotationProfile.VANILLA; // dummy
-        // хак: храним кастомный фактор в bias через переопределение tick factor
+        profile = RotationProfile.VANILLA; 
+        
         customFactor = factor;
         lastUpdate = System.currentTimeMillis();
         returning = false;
     }
     private static float customFactor = -1f;
 
-    /** Мгновенная заморозка ротации (WindHop: фиксация перед броском). Без снапа: continuous. */
+    
     public static void setInstant(float yaw, float pitch, RotationProfile p) {
         profile = p;
         pitch = MathHelper.clamp(pitch, -90f, 90f);
@@ -98,11 +98,11 @@ public final class SmoothRotationManager {
         exp.nefor.client.util.client.RotationUtil.reset();
     }
 
-    /**
-     * Плавное отворачивание: вместо мгновенного сброса к камере ставит
-     * камеру целью глайда. Тик-пакеты продолжают нести плавный поворот —
-     * со стороны сервера всё легитимно, снапа нет.
-     */
+    
+
+
+
+
     public static void release() {
         if (!active || mc.player == null) { reset(); return; }
         float camYaw = mc.player.getYaw();
@@ -120,30 +120,30 @@ public final class SmoothRotationManager {
     public static float getPitch() { return active ? currentPitch : (mc.player != null ? mc.player.getPitch() : 0); }
 
     private static long lastTickNs = System.nanoTime();
-    /** FPS-плавный тик — как рукой 144fps, не робот 20 TPS */
+    
     public static void tick() {
         if (mc.player == null) { reset(); return; }
         if (!active) return;
-        // протухшая цель — тоже глайдом к камере, НЕ reset (иначе снап >320° = AimModulo360)
+        
         if (System.currentTimeMillis() - lastUpdate > 380) { release(); return; }
         if (returning && System.currentTimeMillis() - returnStart > 500) { release(); return; }
 
         long nowNs = System.nanoTime();
         float dt = (nowNs - lastTickNs) / 1_000_000_000f;
         lastTickNs = nowNs;
-        dt = MathHelper.clamp(dt, 0.005f, 0.05f); // 5-50ms
-        float fpsFactor = dt * 20f; // нормируем к 20 TPS
+        dt = MathHelper.clamp(dt, 0.005f, 0.05f); 
+        float fpsFactor = dt * 20f; 
 
-        // GCD всегда: камера в ванилле двигается только кратно GCD,
-        // иначе Grim AimModulo360. Чистый снап без шума (Mathematics.gcdSnap
-        // подмешивает рандом и рвёт сетку — не использовать здесь).
+        
+        
+        
         float gcd = GcdUtil.getGcd();
         float rawDeltaYaw = MathHelper.wrapDegrees(targetYaw - currentYaw);
         float deltaYaw = rawDeltaYaw;
         float deltaPitch = targetPitch - currentPitch;
         if (Math.abs(deltaYaw) < 0.2f && Math.abs(deltaPitch) < 0.2f) {
-            if (returning) { reset(); return; } // взгляд вернулся к камере
-            // снап и тут: сырая цель иначе улетит в пакеты вне сетки GCD
+            if (returning) { reset(); return; } 
+            
             if (gcd > 0.0001f) {
                 targetYaw = GcdUtil.snapAngle(currentYaw, targetYaw, gcd);
                 targetPitch = GcdUtil.snapAngle(currentPitch, targetPitch, gcd);
@@ -157,7 +157,7 @@ public final class SmoothRotationManager {
         float maxYaw, maxPitch;
         if(customFactor >= 0){
             float base = MathHelper.clamp(customFactor, 0.08f, 0.38f);
-            // FPS-плавный: easeOutCubic + dt
+            
             factorYaw = (1f - (float)Math.pow(1f - base, fpsFactor * 1.6f));
             factorPitch = (1f - (float)Math.pow(1f - base*0.62f, fpsFactor * 1.6f));
             maxYaw = 26f; maxPitch = 14f;

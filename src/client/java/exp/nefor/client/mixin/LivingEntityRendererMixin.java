@@ -32,14 +32,14 @@ public abstract class LivingEntityRendererMixin {
     )
     private void onUpdateRenderStateHead(LivingEntity livingEntity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
         if (livingEntity == MinecraftClient.getInstance().player && RotationUtil.isRotating) {
-            // 1. Сохраняем реальные локальные углы игрока
+            
             originalPitch = livingEntity.getPitch();
             originalHeadYaw = livingEntity.headYaw;
             originalLastHeadYaw = livingEntity.lastHeadYaw;
             originalBodyYaw = livingEntity.bodyYaw;
             originalLastBodyYaw = livingEntity.lastBodyYaw;
 
-            // 2. Подменяем углы на целевые (игра сама рассчитает интерполяцию для кадра)
+            
             livingEntity.setPitch(RotationUtil.targetPitch);
             livingEntity.headYaw = RotationUtil.targetYaw;
             livingEntity.lastHeadYaw = RotationUtil.prevTargetYaw;
@@ -54,7 +54,7 @@ public abstract class LivingEntityRendererMixin {
     )
     private void onUpdateRenderStateReturn(LivingEntity livingEntity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
         if (livingEntity == MinecraftClient.getInstance().player && RotationUtil.isRotating) {
-            // 3. Сразу после сбора кадра возвращаем реальные клиентские углы назад
+            
             livingEntity.setPitch(originalPitch);
             livingEntity.headYaw = originalHeadYaw;
             livingEntity.lastHeadYaw = originalLastHeadYaw;

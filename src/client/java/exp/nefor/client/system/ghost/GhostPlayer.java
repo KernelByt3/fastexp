@@ -1,8 +1,8 @@
 package exp.nefor.client.system.ghost;
 
-/**
- * Тело бота: позиция, взгляд, хп. Физика шага с землёй из GhostWorld.
- */
+
+
+
 public class GhostPlayer {
 
     public double x, y, z;
@@ -19,7 +19,7 @@ public class GhostPlayer {
         this.z = z;
     }
 
-    /** Шаг ходьбы к (tx, tz), земля из мира. Возвращает true если дошёл. */
+    
     public boolean walkToward(GhostWorld world, double tx, double tz, double speed) {
         double dx = tx - x, dz = tz - z;
         double hd = Math.hypot(dx, dz);
@@ -33,11 +33,11 @@ public class GhostPlayer {
         return false;
     }
 
-    /** Вертикаль: падение + приземление на surfaceY, прыжок при застревании. */
+    
     public void applyGravity(GhostWorld world) {
         double ground = world.surfaceY(x, z);
         if (Double.isNaN(ground)) {
-            // чанков нет — висим на месте, сервер скорректирует телепортом
+            
             vy = 0;
             onGround = false;
             return;

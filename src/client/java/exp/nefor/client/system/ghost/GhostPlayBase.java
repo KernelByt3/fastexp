@@ -1,6 +1,6 @@
 package exp.nefor.client.system.ghost;
 
-/** Auto-generated empty handlers (122). Override what you need in GhostPlayListener. */
+
 public abstract class GhostPlayBase extends GhostListenerBase implements net.minecraft.network.listener.ClientPlayPacketListener {
 
 @Override

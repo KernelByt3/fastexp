@@ -39,7 +39,7 @@ public final class CommandManager {
                     ChatUtil.sendMessageToClient(n > 0 ? "§aSent as bot" : "§cNo such bot", false);
                     return;
                 }
-                // .bot <nick|*> <text>
+                
                 String who = a[0];
                 String text = String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length));
                 int n = 0;
@@ -73,7 +73,7 @@ public final class CommandManager {
         return true;
     }
 
-    // === .cfg ===
+    
     static class CfgCommand implements Command{
         public String help(){ return ".cfg dir | add <name> | save [name] | load <name> | delete <name> | list"; }
         public void run(String[] a){
@@ -110,7 +110,7 @@ public final class CommandManager {
         }
         void helpCfg(){ ChatUtil.sendMessageToClient("§7.cfg dir §8- list configs", false); ChatUtil.sendMessageToClient("§7.cfg add <name> §8- create", false); ChatUtil.sendMessageToClient("§7.cfg save [name] §8- save", false); ChatUtil.sendMessageToClient("§7.cfg load <name> §8- load", false); }
     }
-    // === .friend ===
+    
     static class FriendCommand implements Command{
         public String help(){ return ".friend add <nick> | remove <nick> | list | clear"; }
         public void run(String[] a){
@@ -120,7 +120,7 @@ public final class CommandManager {
                 case "remove","del" -> { if(a.length<2){msg("§c/friend remove <nick>"); return;} exp.nefor.client.system.FriendManager.remove(a[1]); msg("§aRemoved §b"+a[1]); }
                 case "list" -> list();
                 case "clear" -> { exp.nefor.client.system.FriendManager.clear(); msg("§aCleared"); }
-                default -> { // .friend <nick> toggle
+                default -> { 
                     String n=a[0]; if(exp.nefor.client.system.FriendManager.isFriend(n)){ exp.nefor.client.system.FriendManager.remove(n); msg("§cRemoved "+n);} else {exp.nefor.client.system.FriendManager.add(n); msg("§aAdded "+n);}
                 }
             }
@@ -128,7 +128,7 @@ public final class CommandManager {
         void list(){ var l=exp.nefor.client.system.FriendManager.getAll(); msg("§7Friends ("+l.size()+"): §a"+(l.isEmpty()?"none":String.join(", ",l))); }
         void msg(String s){ ChatUtil.sendMessageToClient(s,false); }
     }
-    // === .macro ===
+    
     static class MacroCommand implements Command{
         public String help(){ return ".macro add <key> <text> | remove <key> | list"; }
         public void run(String[] a){

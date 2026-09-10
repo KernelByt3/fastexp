@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntitySlowMixin {
-    // отключено для Grim — гасило скорость и давало Simulation .42 / GroundSpoof
-    // @Inject(method = "tickMovement", at = @At("TAIL"))
-    // private void nefor$slowForMultiActions(CallbackInfo ci) { ... }
+    
+    
+    
 }

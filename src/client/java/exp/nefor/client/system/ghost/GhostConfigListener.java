@@ -8,7 +8,7 @@ import net.minecraft.network.packet.c2s.config.SelectKnownPacksC2SPacket;
 import net.minecraft.network.state.PlayStateFactories;
 import net.minecraft.registry.DynamicRegistryManager;
 
-/** CONFIGURATION фаза: паки, реестры берём у основного клиента (тот же сервер). */
+
 public class GhostConfigListener extends GhostListenerBase
         implements net.minecraft.network.listener.ClientConfigurationPacketListener {
 

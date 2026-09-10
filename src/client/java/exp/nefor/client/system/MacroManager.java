@@ -42,5 +42,5 @@ public final class MacroManager {
     public static void remove(String key){ MACROS.remove(key.toUpperCase()); save(); }
     public static void clear(){ MACROS.clear(); save(); }
     public static Map<String,String> getAll(){ return Collections.unmodifiableMap(MACROS); }
-    public static void init(){} // force class load
+    public static void init(){} 
 }

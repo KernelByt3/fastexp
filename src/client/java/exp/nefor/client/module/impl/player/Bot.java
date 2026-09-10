@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Bot — настоящие гости на сервере: отдельный коннект с ником,
- * видны в табе и другим игрокам. Только серверы без авторизации.
- * Follow/Stay, «Ко мне», вселение движением (тело стоит).
- * Окно управления — по бинду, ПКМ по боту в окне = вселение/возврат.
- */
+
+
+
+
+
+
 public class Bot extends Module {
 
     public static final class Entry {
@@ -139,7 +139,7 @@ public class Bot extends Module {
         if (selected == en) selected = bots.isEmpty() ? null : bots.get(0);
     }
 
-    /** Бот идёт на основу. */
+    
     public void bringToMe(Entry en) {
         var mc = MinecraftClient.getInstance();
         if (en == null || mc.player == null) return;

@@ -22,7 +22,7 @@ import org.lwjgl.glfw.GLFW;
 public class WindHop extends Module {
 
     private static final float TARGET_PITCH = 89.0f;
-    /** Допуск silent-ротации перед броском. */
+    
     private static final float AIM_TOLERANCE = 5.0f;
     private static final long AIM_TIMEOUT_MS = 600;
 
@@ -53,10 +53,10 @@ public class WindHop extends Module {
             RenderSystem.notification("Нет заряда ветра", Color.RED);
             return;
         }
-        // паузим KillAura чтобы не конфликтовать по ротации (BadPacketsJ)
+        
         var ka = exp.nefor.client.module.ModuleManager.get(exp.nefor.client.module.impl.combat.KillAura.class);
         if(ka!=null && ka.getTarget()!=null){
-            // глайдом, не reset: снап ротации = Grim AimModulo360
+            
             exp.nefor.client.system.rotation.SmoothRotationManager.release();
         }
         active = true;
@@ -78,9 +78,9 @@ public class WindHop extends Module {
         long now = System.currentTimeMillis();
 
         switch (stage) {
-            // Начинаем плавный доворот вниз. Камеру игрока НЕ трогаем —
-            // работает только silent-ротация через RotationUtil (миксин подменяет
-            // yaw/pitch только в пакетах, Grim видит легитный плавный поворот).
+            
+            
+            
             case 0 -> {
                 player.setSprinting(false);
                 client.options.sprintKey.setPressed(false);
@@ -88,8 +88,8 @@ public class WindHop extends Module {
                 stage = 1;
                 timer = now;
             }
-            // Ждём пока silent-ротация доплывёт до ~89°. Каждый тик обновляем
-            // цель чтобы SmoothRotationManager не протух (таймаут 380мс внутри).
+            
+            
             case 1 -> {
                 aimDown(player);
                 if (aimReady() || now - timer > AIM_TIMEOUT_MS) {
@@ -104,7 +104,7 @@ public class WindHop extends Module {
                         boolean moving = client.options.forwardKey.isPressed() || client.options.backKey.isPressed()
                                 || client.options.leftKey.isPressed() || client.options.rightKey.isPressed();
                         if (moving) {
-                            // отпускаем WASD на момент свапа: Grim видит input not moving → не флаг MultiActionsC/Simulation
+                            
                             client.options.forwardKey.setPressed(false);
                             client.options.backKey.setPressed(false);
                             client.options.leftKey.setPressed(false);
@@ -122,12 +122,12 @@ public class WindHop extends Module {
                     timer = now;
                 }
             }
-            // Держим доворот, затем бросок — СТРОГО по готовности.
-            // Бросок мимо доворота = заряд летит не вниз + паливо ротации,
-            // поэтому без aimReady только ждём, а по таймауту — отмена без броска.
-            // Никаких ручных Look-пакетов — лишний PlayerMoveC2SPacket.LookAndOnGround
-            // в том же тике и флагит Grim TickTimer (flying/end) + BadPacketsJ.
-            // Silent-ротация через миксин уже подменяет yaw/pitch в обычных пакетах движения.
+            
+            
+            
+            
+            
+            
             case 2 -> {
                 aimDown(player);
                 if (!aimReady()) {
@@ -138,11 +138,11 @@ public class WindHop extends Module {
                     }
                     break;
                 }
-                // В 1.21+ пакет USE_ITEM везёт yaw/pitch, и Grim BadPacketsJ требует
-                // ТОЧНОГО совпадения с ротацией следующего тик-пакета. Поэтому:
-                // 1) ротация замораживается (setInstant — дальше тики шлют те же значения),
-                // 2) в USE_ITEM кладутся те же замороженные значения через камеру.
-                // Доворот после броска не обновляем — иначе тик-пакеты разъедутся с USE_ITEM.
+                
+                
+                
+                
+                
                 float frozenYaw = MathHelper.wrapDegrees(
                         RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw());
                 float frozenPitch = RotationUtil.isRotating ? RotationUtil.targetPitch : player.getPitch();
@@ -159,7 +159,7 @@ public class WindHop extends Module {
                 timer = now;
             }
             case 3 -> {
-                // только ждём: замороженная ротация едет в тик-пакетах и совпадает с USE_ITEM
+                
                 if (now - timer < 200) break;
                 restoreSlot(player);
                 lastWindMs = System.currentTimeMillis();
@@ -170,7 +170,7 @@ public class WindHop extends Module {
         }
     }
 
-    /** Плавная цель вниз: yaw сохраняем, pitch → 89. Камера не дёргается. */
+    
     private void aimDown(ClientPlayerEntity player) {
         float yaw = RotationUtil.isRotating ? RotationUtil.targetYaw : player.getYaw();
         SmoothRotationManager.setTargetWithFactor(yaw, TARGET_PITCH, 0.38f);
@@ -189,7 +189,7 @@ public class WindHop extends Module {
         im.clickSlot(sh.syncId, screenSlot, player.getInventory().getSelectedSlot(), SlotActionType.SWAP, player);
     }
 
-    /** Возврат слота после броска/отмены. */
+    
     private void restoreSlot(ClientPlayerEntity player) {
         if (windSlot >= 9) {
             moveToHand(player, windSlot);

@@ -22,11 +22,11 @@ import java.util.BitSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Настоящий гость на сервере: отдельный TCP-коннект с сессией,
- * своё тело (GhostPlayer) и свой кусок мира (GhostWorld).
- * Виден в табе и другим игрокам. Только серверы без авторизации.
- */
+
+
+
+
+
 public class GhostConnection {
 
     public final GhostSession session;
@@ -107,7 +107,7 @@ public class GhostConnection {
         send(new HandSwingC2SPacket(Hand.MAIN_HAND));
     }
 
-    /** Чат от лица бота (без подписи — примут серверы без secure-chat). */
+    
     public void sendChat(String text) {
         if (text == null || text.isBlank()) return;
         try {
@@ -121,7 +121,7 @@ public class GhostConnection {
         }
     }
 
-    /** Тик из модуля: handshake, движение, пакеты. */
+    
     public void tick() {
         if (dead) return;
         if (conn == null || !conn.isOpen()) {
@@ -144,7 +144,7 @@ public class GhostConnection {
 
         if (hasTarget) {
             boolean arrived = player.walkToward(world, tx, tz, 4.2);
-            // застрял (стена/яма) — подпрыгнуть
+            
             double moved = Math.hypot(player.x - lastX, player.z - lastZ);
             if (moved < 0.05 && player.onGround) {
                 if (stuckMs == 0) stuckMs = now;

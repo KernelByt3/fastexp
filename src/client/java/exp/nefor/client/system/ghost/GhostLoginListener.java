@@ -4,7 +4,7 @@ import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.login.EnterConfigurationC2SPacket;
 import net.minecraft.network.state.ConfigurationStates;
 
-/** LOGIN фаза гостя: offline-hello, compression, переход в конфигурацию. */
+
 public class GhostLoginListener extends GhostListenerBase
         implements net.minecraft.network.listener.ClientLoginPacketListener {
 
@@ -14,7 +14,7 @@ public class GhostLoginListener extends GhostListenerBase
 
     @Override
     public void onHello(net.minecraft.network.packet.s2c.login.LoginHelloS2CPacket packet) {
-        // сервер просит шифрование = online-mode, без аккаунта не зайти
+        
         ghost.status = "premium only";
         ghost.disconnect();
     }
@@ -42,7 +42,7 @@ public class GhostLoginListener extends GhostListenerBase
 
     @Override
     public void onQueryRequest(net.minecraft.network.packet.s2c.login.LoginQueryRequestS2CPacket packet) {
-        // запросы (бренд и т.п.) игнорим — сервер обычно идёт дальше
+        
     }
 
     @Override

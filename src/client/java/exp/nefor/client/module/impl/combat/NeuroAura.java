@@ -16,10 +16,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
-/**
- * Нейро KillAura — использует NeuroModel обученный на твоих квестах.
- * Датасет собирается в NeuralTrainingScreen, epochs обучают веса.
- */
+
+
+
+
 public class NeuroAura extends Module {
     private final BooleanSetting neuro = new BooleanSetting("Нейро", true);
     private final SliderSetting range = new SliderSetting("Радиус", 2.8, 4.5, 0.1, 3.2);
@@ -44,8 +44,8 @@ public class NeuroAura extends Module {
 
     @Override
     public void onTick() {
-        // Снапшот ротации, уже улетевшей на сервер последним flying-пакетом
-        // (см. KillAura): гейты и удар используют его, не свежую интерполяцию.
+        
+        
         float srvYaw = SmoothRotationManager.getYaw();
         float srvPitch = SmoothRotationManager.getPitch();
         RotationUtil.onClientTick();
@@ -54,7 +54,7 @@ public class NeuroAura extends Module {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         ClientPlayerEntity player = mc.player;
 
-        // пауза пока WindHop крутит свою ротацию + 900мс после ветра
+        
         var windHop = exp.nefor.client.module.ModuleManager.get(
                 exp.nefor.client.module.impl.movement.WindHop.class);
         if (windHop != null && windHop.isActive()) return;
@@ -65,7 +65,7 @@ public class NeuroAura extends Module {
         if (target != null && target.isAlive() && !target.isRemoved()
                 && player.distanceTo(target) <= range.getValue() + 1.0
                 && RaycastUtil.canHit(player, target, range.getValue() + 0.5)) {
-            // держим ту же цель
+            
         } else {
             target = findTarget(player, range.getValue());
         }
@@ -75,8 +75,8 @@ public class NeuroAura extends Module {
         }
         if (target != prev) aimLockMs = System.currentTimeMillis();
 
-        // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
-        // иначе сервер видит спринт и криты не проходят
+        
+        
         if (player.distanceTo(target) <= maxReach + 0.5) {
             player.setSprinting(false);
             mc.options.sprintKey.setPressed(false);
@@ -102,7 +102,7 @@ public class NeuroAura extends Module {
 
         SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
 
-        // === ЛОГИКА АТАКИ ===
+        
         if (player.distanceTo(target) > maxReach + 0.3) return;
         double eyeDist = player.getEyePos().distanceTo(
                 RaycastUtil.closestPoint(target.getBoundingBox(), player.getEyePos()));
@@ -113,13 +113,13 @@ public class NeuroAura extends Module {
                 || mc.options.rightKey.isPressed();
         if (!RotationUtil.isLookingAt(target, moving ? 10f : 6f)) return;
 
-        // Строгая проверка хитбокса по СЕРВЕРНОЙ ротации (снапшот): луч обязан
-        // пересекать бокс цели — иначе удар мимо и Grim Hitboxes.
+        
+        
         if (!RaycastUtil.isAimingAt(player, srvYaw, srvPitch, target, maxReach)) return;
 
         if (player.getAttackCooldownProgress(0) < 0.995f) return;
-        // криты как в KillAura: бьём только в падении, иначе урон режется.
-        // спринт гасим sprint-reset перед ударом, а не отказом от него
+        
+        
         if (onlyCrits.getValue()) {
             if (player.isOnGround()) return;
             if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return;
@@ -140,7 +140,7 @@ public class NeuroAura extends Module {
         player.setYaw(ry);
         player.setPitch(rp);
 
-        // обучение в реальном бою: каким доворотом попали и за сколько
+        
         if (autoTrain.getValue()) {
             long reaction = MathHelper.clamp(System.currentTimeMillis() - aimLockMs, 30, 1500);
             NeuroDataset.add(new NeuroDataset.Sample(lastDeltaYaw, lastDeltaPitch, lastDist, lastDist, reaction, true));

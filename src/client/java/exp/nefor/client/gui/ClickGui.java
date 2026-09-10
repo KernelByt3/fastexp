@@ -20,14 +20,14 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
-/**
- * ClickGui v2 — красивая структура:
- *  - анимированное открытие/закрытие окна (scale+fade)
- *  - плавный скролл карточек и настроек
- *  - подсветка поиска
- *  - slide-in панели настроек
- *  - мягкие тени, блюр-подложка и hover-анимации
- */
+
+
+
+
+
+
+
+
 public class ClickGui extends NeforScreen implements Bindable {
 
     private static final float[] ACCENT = {1f, 1f, 1f};
@@ -81,7 +81,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         int winH = Math.min(this.height - M * 2, 510);
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
-        // scale animation
+        
         float scale = AnimationUtil.easeOutExpo(openProgress);
         int animW = (int)(winW*scale);
         int animH = (int)(winH*scale);
@@ -95,15 +95,15 @@ public class ClickGui extends NeforScreen implements Bindable {
         boolean settingsOpen = settingsProgress > 0.02f;
         int cardsW = winW - SIDEBAR_W - (int)(SETTINGS_W*settingsProgress);
 
-        // backdrop blur imitation: dim + vignette
+        
         UiRender.dimScreen(this.width, this.height, 0.62f * openProgress);
-        // window
+        
         UiRender.roundRect(winX, winY, winW, winH, 12,
                 new float[]{0.045f,0.045f,0.065f,0.98f},
                 new float[]{1,1,1,0.06f}, 1,
                 new float[]{0,0,0,0}, 0);
 
-        // header logo
+        
         RenderSystem.drawText("nefor", winX + 16, winY + 11, 15f, 0xFFFFFFFF);
         RenderSystem.drawText("1.21.11", winX + 16, winY + 26, 8f, LABEL);
 
@@ -124,7 +124,7 @@ public class ClickGui extends NeforScreen implements Bindable {
                         active? ACCENT_F(0.35f) : new float[]{0,0,0,0}, 1,
                         new float[]{0,0,0,0},0);
             }
-            // left accent bar animated
+            
             if (anim>0.01f) UiRender.roundRect(winX+6, y+4, 2.5f, 16, 1.5f, ACCENT_F(0.85f*anim), new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
             RenderSystem.drawIcon(iconFor(category), winX+12, y+5, 13);
@@ -141,7 +141,7 @@ public class ClickGui extends NeforScreen implements Bindable {
             y+=26;
         }
 
-        // user card
+        
         String user = this.client.getSession().getUsername();
         int userY = winY+winH-38;
         UiRender.roundRect(winX+8, userY, SIDEBAR_W-16, 30, 8,
@@ -151,10 +151,10 @@ public class ClickGui extends NeforScreen implements Bindable {
         RenderSystem.drawText(user, winX+34, userY+7, 10f, TEXT);
         RenderSystem.drawText("Premium", winX+34, userY+17, 8f, LABEL);
 
-        // divider
+        
         UiRender.roundRect(contentX, winY+10, 1, winH-20, 0, new float[]{1,1,1,0.06f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
-        // search bar
+        
         int searchBarX = contentX+12;
         int searchBarW = cardsW - 24 - 28;
         boolean searchHovered = UiRender.inBox(mouseX, mouseY, searchBarX, winY+10, searchBarW, TOPBAR_H-20);
@@ -167,13 +167,13 @@ public class ClickGui extends NeforScreen implements Bindable {
                 searchBarX+26, winY+17, 11f, search.isEmpty()&&!searchFocused? LABEL: TEXT);
         addHit(searchBarX, winY+10, searchBarW, TOPBAR_H-20, ()-> searchFocused=true, null, null);
 
-        // filter icon
+        
         UiRender.roundRect(searchBarX+searchBarW+8, winY+14, 22,22,6,
                 UiRender.inBox(mouseX, mouseY, searchBarX+searchBarW+8, winY+14,22,22)? new float[]{1,1,1,0.08f}: new float[]{1,1,1,0.03f},
                 new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         for(int i=0;i<3;i++) UiRender.roundRect(searchBarX+searchBarW+13, winY+20+i*4.5, 12,1.8f,1, new float[]{0.78f,0.78f,0.84f,0.9f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
-        // settings side slide
+        
         if (settingsProgress>0.01f) {
             int sx = winX+winW - (int)(SETTINGS_W*settingsProgress);
             UiRender.roundRect(sx, winY+10, 1, winH-20, 0, new float[]{1,1,1,0.06f*settingsProgress}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
@@ -184,15 +184,15 @@ public class ClickGui extends NeforScreen implements Bindable {
             }
         }
 
-        // cards area with scroll + scissors imitation via clipping rect manually limited
+        
         if(cardsW>80){
-            // enable scroll
+            
             int maxScroll = Math.max(0, estimateCardsHeight(cardsW)- (winH - TOPBAR_H - 16));
             targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
             renderCards(contentX+12 + (int)scroll*0, winY+TOPBAR_H+4 - (int)scroll, cardsW-24, winH - TOPBAR_H - 16 + (int)scroll);
         }
 
-        // waiting bind overlay
+        
         if(waitingBind!=null){
             String txt = "Press key for " + waitingBind.bindLabel() + "  [ESC to cancel]";
             float w = RenderSystem.textWidth(txt,11f)+20;
@@ -238,11 +238,11 @@ public class ClickGui extends NeforScreen implements Bindable {
             if(colY[col]>0 && colY[col]+cardH> maxH && col<columns-1) col++;
             int cx=x+col*(cardW+gap); int cy=y+colY[col]; colY[col]+=cardH+gap;
 
-            // card background with subtle hover
+            
             UiRender.roundRect(cx, cy, cardW, cardH, 10,
                     new float[]{0.078f,0.078f,0.108f,0.96f},
                     new float[]{1,1,1,0.05f},1, new float[]{0,0,0,0},0);
-            // header gradient
+            
             UiRender.roundRect(cx, cy, cardW, 30, 10,
                     new float[]{0.09f,0.09f,0.14f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
             RenderSystem.drawIcon(iconFor(category), cx+10, cy+8, 13);
@@ -272,23 +272,23 @@ public class ClickGui extends NeforScreen implements Bindable {
         if(hovered){
             UiRender.roundRect(x,y,w,28,7, new float[]{1,1,1,0.05f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         }
-        // enabled left bar
+        
         if(anim>0.02f) UiRender.roundRect(x, y+4, 2.2, 20,1, ACCENT_F(0.9f*anim), new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
-        // highlight search
+        
         String name = module.getName();
         float nameX = (float)(x+10);
         if(!search.isEmpty() && name.toLowerCase().contains(search.toLowerCase())){
             UiRender.roundRect(nameX-2, y+5, RenderSystem.textWidth(name,12f)+4, 14,4, new float[]{1,1,1,0.10f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         }
         RenderSystem.drawText(name, nameX, (float)(y+8), 12.2f, module.isEnabled()? TEXT: DIM);
-        // desc peek
-        // dots -> settings
+        
+        
         float dotsX=(float)(x+w-68);
         for(int i=0;i<3;i++) UiRender.roundRect(dotsX+i*6, y+13, 3,3,1.5f, new float[]{0.65f,0.65f,0.72f, hovered?1:0.6f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
         addHit(dotsX-4, y, 28,28, ()-> selectedModule= selectedModule==module? null: module, ()-> selectedModule=module, ()-> startBind(module));
 
-        // animated pill
+        
         double pillX = x+w-34; double pillY = y+7;
         double pillW=28; double pillH=14;
         float off = anim*14f;
@@ -296,7 +296,7 @@ public class ClickGui extends NeforScreen implements Bindable {
         UiRender.roundRect(pillX+1+off*0.92, pillY+1.5, 11,11,5.5f, new float[]{0.95f,0.96f,1f,1f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
 
         addHit(pillX-6, y, pillW+12,28, module::toggle, null,null);
-        // main row left click toggles, right opens settings
+        
         addHit(x, y, w-80,28, module::toggle, ()-> selectedModule=module, ()-> startBind(module));
     }
 
@@ -341,7 +341,7 @@ public class ClickGui extends NeforScreen implements Bindable {
                 String vt="< "+choice.getValue()+" >";
                 float vw=RenderSystem.textWidth(vt,10f);
                 RenderSystem.drawText(vt, x+w-8-vw, rowY+6,10f, hovered? ACCENT_TEXT: DIM);
-                // split left/right
+                
                 addHit(x+w/2, rowY, w/2-4,34, ()-> choice.cycle(1), ()-> choice.cycle(-1), null);
                 addHit(x+4,rowY,w/2-4,34, ()-> choice.cycle(-1), ()-> choice.cycle(1), null);
             } else if(setting instanceof KeybindSetting keybind){
@@ -357,11 +357,11 @@ public class ClickGui extends NeforScreen implements Bindable {
         if(settings.isEmpty()) RenderSystem.drawText("Нет настроек", x+8,rowY+6,10f, LABEL);
     }
 
-    private void togglePill(double x,double y,double w,boolean on){ /* unused legacy */ }
+    private void togglePill(double x,double y,double w,boolean on){  }
     private void chevron(double cx,double cy,double size,boolean down){
-        // sleek chevron
+        
         UiRender.roundRect(cx-size/2, cy-1, size,2,1, new float[]{0.70f,0.70f,0.76f, down?0.55f:0.85f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
-        // arrow head
+        
         double off = down? 2.2: -2.2;
         UiRender.roundRect(cx-3, cy+off, 6,2,1, new float[]{0.70f,0.70f,0.76f, down?0.55f:0.85f}, new float[]{0,0,0,0},0, new float[]{0,0,0,0},0);
     }
@@ -397,9 +397,9 @@ public class ClickGui extends NeforScreen implements Bindable {
             return true;
         }
         double mx=click.x(); double my=click.y();
-        // unfocus search if clicked outside
+        
         int contentX=M+SIDEBAR_W;
-        // rough check for search bar (recalculated)
+        
         if(searchFocused && !UiRender.inBox(mx,my, contentX+12, M+10, 200, 22)) searchFocused=false;
         for(int i=hits.size()-1;i>=0;i--){
             Region r=hits.get(i);
@@ -420,7 +420,7 @@ public class ClickGui extends NeforScreen implements Bindable {
     }
     @Override public boolean mouseReleased(Click click){ activeDrag=null; return super.mouseReleased(click); }
     @Override public boolean mouseScrolled(double x,double y,double hx,double vy){
-        // scroll cards or settings
+        
         boolean overSettings = selectedModule!=null && mouseX > this.width - SETTINGS_W - 20;
         if(overSettings) settingsScroll += vy*18;
         else targetScroll -= vy*20;

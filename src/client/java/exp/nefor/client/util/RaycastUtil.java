@@ -7,9 +7,9 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 
-/**
- * Точный raycast по хитбоксу — фиксит жалобы на хитбоксы.
- */
+
+
+
 public final class RaycastUtil {
     private RaycastUtil(){}
 
@@ -17,9 +17,9 @@ public final class RaycastUtil {
         var mc = MinecraftClient.getInstance();
         if(mc.world==null) return false;
         Vec3d eye = from.getEyePos();
-        // ближайшая точка хитбокса к глазу
+        
         Box box = to.getBoundingBox().expand(0.08);
-        // raycast к центру хитбокса + к углам
+        
         Vec3d target = new Vec3d(
                 Math.clamp(eye.x, box.minX, box.maxX),
                 Math.clamp(eye.y, box.minY, box.maxY),
@@ -28,7 +28,7 @@ public final class RaycastUtil {
         double dist = eye.distanceTo(target);
         if(dist > maxRange+0.3) return false;
 
-        // проверка стен — raycast от глаз к точке хитбокса
+        
         var hit = mc.world.raycast(new RaycastContext(eye, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, from));
         return hit.getType() == HitResult.Type.MISS;
     }
@@ -41,10 +41,10 @@ public final class RaycastUtil {
         );
     }
 
-    /**
-     * Строгая проверка: луч от глаз вдоль указанной ротации должен пересекать
-     * хитбокс цели в пределах дистанции. Только тогда удар легитимен для античита.
-     */
+    
+
+
+
     public static boolean isAimingAt(LivingEntity from, float yaw, float pitch, LivingEntity to, double maxRange) {
         Vec3d eye = from.getEyePos();
         double yawRad = Math.toRadians(yaw);

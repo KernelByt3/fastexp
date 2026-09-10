@@ -1,6 +1,6 @@
 package exp.nefor.client.system.ghost;
 
-/** PLAY фаза гостя: keepalive, телепорты, распаковка бандлов. Остальное игнор. */
+
 public class GhostPlayListener extends GhostPlayBase {
 
     public GhostPlayListener(GhostConnection ghost) {

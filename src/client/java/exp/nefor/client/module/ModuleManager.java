@@ -46,8 +46,8 @@ public class ModuleManager {
     public static void init() {
         if (!MODULES.isEmpty()) return;
 
-        // AutoSprint первым: ауры ниже гасят спринт пока цель в радиусе (крит),
-        // иначе спринт включался бы обратно после сброса аурой в том же тике
+        
+        
         register(new AutoSprint());
         register(new AutoSell());
         register(new AntiAfk());
@@ -127,7 +127,7 @@ public class ModuleManager {
         for (Module module : MODULES) {
             if (module.isEnabled()) module.onTick();
         }
-        // плавные ротации крутятся всегда
+        
         exp.nefor.client.system.rotation.SmoothRotationManager.tick();
     }
 }

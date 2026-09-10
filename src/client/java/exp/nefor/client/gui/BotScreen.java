@@ -8,10 +8,10 @@ import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-/**
- * Окно ботов: поле ника, поле сервера, список со статусами.
- * ПКМ по боту — вселение движением/возврат, ЛКМ — выбор.
- */
+
+
+
+
 public class BotScreen extends NeforScreen {
 
     private static final int W = 280;
@@ -46,19 +46,19 @@ public class BotScreen extends NeforScreen {
 
         RenderSystem.drawText("bots", x + W / 2f - RenderSystem.textWidth("bots", 15f) / 2, y + inDy(0), 15f, 0xFFFFFFFF);
 
-        // поле ника + добавить
+        
         boolean fh = UiRender.inBox(mouseX, mouseY, x, y + 26, W - 64, 22);
         UiRender.field(x, y + 26, W - 64, 22, nickFocused || fh);
         drawFieldText(x + 8, y + 32, nickInput, nickFocused, "nick...");
         boolean addH = UiRender.inBox(mouseX, mouseY, x + W - 58, y + 26, 58, 22);
         UiRender.button(x + W - 58, y + 26, 58, 22, "Add", addH, false);
 
-        // поле сервера
+        
         boolean sh = UiRender.inBox(mouseX, mouseY, x, y + 52, W, 22);
         UiRender.field(x, y + 52, W, 22, serverFocused || sh);
         drawFieldText(x + 8, y + 58, serverInput, serverFocused, "server:port");
 
-        // список
+        
         int listY = y + 82;
         int rowH = 26;
         java.util.List<Bot.Entry> bots = b == null ? java.util.List.of() : b.getBots();

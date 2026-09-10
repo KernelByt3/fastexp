@@ -29,7 +29,7 @@ public abstract class Module implements Bindable {
         this.keyCode = keyCode;
     }
 
-    /** @deprecated use {@link #Module(String, String, Category, int)} */
+    
     @Deprecated
     protected Module(String name, String description, String category, int keyCode) {
         this(name, description, Category.byLabel(category), keyCode);

@@ -1,8 +1,8 @@
 package exp.nefor.client.system.rotation;
 
-/**
- * Per-server rotation profile. Tune GCD, noise, smoothing and aim logic.
- */
+
+
+
 public enum RotationProfile {
 
     VANILLA("Vanilla", 0.0f, 1.0f, 12f, false, 0.30f, AimPoint.CHEST),
@@ -17,9 +17,9 @@ public enum RotationProfile {
     public final String name;
     public final float noiseYaw;
     public final float noisePitchScale;
-    public final float fovCheck; // degrees for isLookingAt
+    public final float fovCheck; 
     public final boolean gcdSnap;
-    public final float smoothing; // 0..1 lerp factor
+    public final float smoothing; 
     public final AimPoint aimPoint;
 
     RotationProfile(String name, float noiseYaw, float noisePitchScale, float fovCheck, boolean gcdSnap, float smoothing, AimPoint aimPoint) {

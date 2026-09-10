@@ -53,7 +53,7 @@ public class AltsManagerScreen extends NeforScreen {
         String count = filtered.size() + "";
         RenderSystem.drawText(count, x + W - RenderSystem.textWidth(count, 10f), y + 3, 10f, 0xFF6E6E78);
 
-        // input
+        
         boolean fieldHover = UiRender.inBox(mouseX, mouseY, x, y + 26, W - 52, 22);
         UiRender.field(x, y + 26, W - 52, 22, inputFocused || fieldHover);
         String shown = input.isEmpty() ? "nick..." : input;
@@ -65,11 +65,11 @@ public class AltsManagerScreen extends NeforScreen {
         UiRender.field(x + W - 46, y + 26, 46, 22, randHover);
         RenderSystem.drawText("dice", x + W - 46 + 23 - RenderSystem.textWidth("dice", 10f) / 2, y + 32, 10f, 0xFF9A9AA5);
 
-        // login
+        
         boolean loginHover = UiRender.inBox(mouseX, mouseY, x, y + 52, W, 22);
         UiRender.button(x, y + 52, W, 22, "Login", loginHover, false);
 
-        // list
+        
         int listY = y + 82;
         int listH = Math.min(filtered.size() * 24 + 8, 192);
         UiRender.field(x, listY, W, listH, false);
@@ -96,7 +96,7 @@ public class AltsManagerScreen extends NeforScreen {
             RenderSystem.drawText("empty", x + 12, listY + 10, 11f, 0xFF6E6E78);
         }
 
-        // bottom row
+        
         int btnY = listY + listH + 8;
         int btnW = (W - 8) / 3;
         boolean b1h = UiRender.inBox(mouseX, mouseY, x, btnY, btnW, 20);
@@ -154,7 +154,7 @@ public class AltsManagerScreen extends NeforScreen {
             int yOff = (int) (scroll % rowH);
             int idx = start + (int) (my - listY - 4 + yOff) / rowH;
             if (idx >= 0 && idx < filtered.size()) {
-                // поправка на stagger-анимацию строк
+                
                 int staggerDy = (int) rowDy(idx - start);
                 int idxAdj = start + (int) (my - listY - 4 + yOff - staggerDy) / rowH;
                 if (idxAdj < 0 || idxAdj >= filtered.size()) return true;

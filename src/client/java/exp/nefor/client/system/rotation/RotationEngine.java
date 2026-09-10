@@ -6,10 +6,10 @@ import net.minecraft.util.math.MathHelper;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Центральный расчёт ротаций — теперь просто считает цель и делегирует плавность в SmoothRotationManager.
- * GCD вынесен в GcdUtil.java
- */
+
+
+
+
 public final class RotationEngine {
 
     private static long lastNoiseTime = 0;
@@ -32,7 +32,7 @@ public final class RotationEngine {
             float nYaw = profile.noiseYaw;
             float nPitch = nYaw * profile.noisePitchScale;
             cachedYawNoise = (float)(ThreadLocalRandom.current().nextGaussian() * nYaw * 0.30);
-            // вертикальный шум в 2 раза слабее — не дёргает вверх-вниз
+            
             cachedPitchNoise = (float)(ThreadLocalRandom.current().nextGaussian() * nPitch * 0.09);
             lastNoiseTime = now;
         }

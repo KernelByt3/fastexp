@@ -16,7 +16,7 @@ public final class UiRender {
         return MinecraftClient.getInstance().getWindow().getFramebufferHeight();
     }
 
-    /** Rounded rect in logical (GUI) coordinates; scaling handled here. */
+    
     public static void roundRect(double x, double y, double w, double h, double radius,
                                  float[] fill, float[] outline, float outlineWidth,
                                  float[] glow, float glowSize) {
@@ -36,7 +36,7 @@ public final class UiRender {
                 new float[]{0.54f, 0.17f, 0.89f, 0.12f}, 5);
     }
 
-    /** Непрозрачная подложка для наших экранов — перекрывает панораму/мир. */
+    
     public static void background(int width, int height) {
         roundRect(0, 0, width, height, 0,
                 new float[]{0.055f, 0.055f, 0.085f, 1f},

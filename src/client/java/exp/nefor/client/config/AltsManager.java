@@ -94,10 +94,10 @@ public class AltsManager {
         return nick;
     }
 
-    /**
-     * The field is final, so a Mixin accessor fails with IllegalAccessError.
-     * Reflection with setAccessible(true) can write instance final fields.
-     */
+    
+
+
+
     private static void setSessionField(MinecraftClient client, Session session) {
         for (String fieldName : new String[]{"session", "field_1724"}) {
             try {
@@ -128,7 +128,7 @@ public class AltsManager {
         add(trimmed);
         LOGGER.info("Switched to offline account {}, returning to menu", trimmed);
 
-        // The change takes effect only after reconnecting.
+        
         client.execute(() -> {
             if (client.world != null) {
                 client.disconnect(new exp.nefor.client.gui.NeforTitleScreen(), false);

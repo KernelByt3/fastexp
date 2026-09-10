@@ -7,10 +7,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Мир бота: какие чанки загружены + высота поверхности из heightmap.
- * Полного мира нет — только земля под ногами чтобы не клипать.
- */
+
+
+
+
 public class GhostWorld {
 
     private final Set<Long> loaded = new HashSet<>();
@@ -37,10 +37,10 @@ public class GhostWorld {
         return loaded.contains(ChunkPos.toLong(((int) Math.floor(x)) >> 4, ((int) Math.floor(z)) >> 4));
     }
 
-    /**
-     * Y поверхности (ступни) или NaN если чанка нет.
-     * Heightmap хранит верх+1 пакованными по 9 бит.
-     */
+    
+
+
+
     public double surfaceY(double x, double z) {
         int cx = ((int) Math.floor(x)) >> 4;
         int cz = ((int) Math.floor(z)) >> 4;

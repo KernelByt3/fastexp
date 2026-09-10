@@ -19,9 +19,9 @@ import org.lwjgl.glfw.GLFW;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 
-/**
- * FakePlayer — NPC для теста KillAura: можно бить, бесконечные тотемы, киллаура его видит.
- */
+
+
+
 public class FakePlayer extends Module {
 
     private OtherClientPlayerEntity fake;
@@ -48,11 +48,11 @@ public class FakePlayer extends Module {
         despawn();
         GameProfile profile = new GameProfile(UUID.randomUUID(), "FakePlayer");
         fake = new OtherClientPlayerEntity(mc.world, profile);
-        // 2 блока перед игроком
+        
         Vec3d eye = mc.player.getEyePos();
         Vec3d look = mc.player.getRotationVector();
         Vec3d pos = eye.add(look.x*2.2, 0, look.z*2.2);
-        // на землю
+        
         pos = new Vec3d(pos.x, mc.player.getY(), pos.z);
         spawnPos = pos;
         fake.setPosition(pos.x, pos.y, pos.z);
@@ -87,23 +87,23 @@ public class FakePlayer extends Module {
         var mc = MinecraftClient.getInstance();
         if(!isEnabled() || fake==null || mc.world==null || mc.player==null) return;
 
-        // держим на месте, не падает
+        
         fake.setVelocity(0,0,0);
         fake.setOnGround(true);
-        // бесконечные тотемы — если хп <=2, попустить тотем
+        
         if(fake.getHealth() <= 2f){
             fake.setHealth(20f);
             fake.clearStatusEffects();
             fake.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(StatusEffects.REGENERATION, 80, 1));
             fake.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(StatusEffects.ABSORPTION, 100, 0));
             fake.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 800, 0));
-            // партикли тотема — убрано для совместимости
+            
             totemsPopped++;
             fake.setCustomName(Text.literal("FakePlayer §7[ §a"+totemsPopped+" §7 totems ]"));
             fake.setStackInHand(Hand.OFF_HAND, Items.TOTEM_OF_UNDYING.getDefaultStack());
         }
 
-        // если отошёл далеко — тп к игроку
+        
         if(mc.player.distanceTo(fake) > 12){
             Vec3d eye = mc.player.getEyePos();
             Vec3d look = mc.player.getRotationVector();
@@ -112,7 +112,7 @@ public class FakePlayer extends Module {
             fake.setPosition(pos.x, pos.y, pos.z);
         }
 
-        // чтобы киллаура точно била — делаем хитбокс видимым и не в креативе
+        
         fake.setInvisible(false);
         fake.setInvulnerable(false);
     }

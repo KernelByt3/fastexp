@@ -27,7 +27,7 @@ public class SliderSetting extends Setting {
         changed();
     }
 
-    /** Sets value without triggering a config save (use when dragging). */
+    
     public void setRaw(double value) {
         this.value = clamp(value);
     }

@@ -65,9 +65,9 @@ public class KillAura extends Module {
 
     @Override
     public void onTick() {
-        // Снапшот ротации, уже улетевшей на сервер последним flying-пакетом.
-        // Grim Hitboxes сверяет атаку именно с ней, а не со свежей интерполяцией:
-        // гейты и удар ниже используют srvYaw/srvPitch. Снимать ДО tick()!
+        
+        
+        
         float srvYaw = exp.nefor.client.system.rotation.SmoothRotationManager.getYaw();
         float srvPitch = exp.nefor.client.system.rotation.SmoothRotationManager.getPitch();
         RotationUtil.onClientTick();
@@ -86,12 +86,12 @@ public class KillAura extends Module {
             attackedThisJump = false;
         }
 
-        // FIX Grim BadPacketsJ + RotationPlace + Simulation + MultiActionsC + GroundSpoof
+        
         var windHop = exp.nefor.client.module.ModuleManager.get(WindHop.class);
         if(windHop!=null && windHop.isActive()){
             return;
         }
-        // пауза после ветра 900мс — пока Grim считает explosion/simulation
+        
         if(System.currentTimeMillis() - WindHop.lastWindMs < 900) return;
         boolean holdingWind = player.getMainHandStack().isOf(Items.WIND_CHARGE) || player.getOffHandStack().isOf(Items.WIND_CHARGE);
         if(holdingWind && (player.isUsingItem() || player.getPitch() > 70 || client.options.useKey.isPressed())){
@@ -99,9 +99,9 @@ public class KillAura extends Module {
             return;
         }
 
-        // фокус на одной цели — не свитчим пока жива и в радиусе
+        
         if (target != null && target.isAlive() && !target.isRemoved() && player.distanceTo(target) <= range.getValue()+1.0 && exp.nefor.client.util.RaycastUtil.canHit(player, target, range.getValue()+0.5)) {
-            // держим ту же цель
+            
         } else {
             target = findTarget(player, world, range.getValue());
         }
@@ -111,17 +111,17 @@ public class KillAura extends Module {
         }
 
         RotationProfile profile = currentProfile();
-        // упреждение по скорости цели: ведём точку встречи, а не отстаём
+        
         double leadSec = MathHelper.clamp(player.distanceTo(target) * 0.08, 0.05, 0.28);
 
-        // приоритет ауры над AutoSprint: пока цель в радиусе — без спринта,
-        // иначе сервер видит спринт и криты не проходят (кроме KeepSprint)
+        
+        
         double maxReach = Math.min(range.getValue(), 3.0);
         if (!keepSprint.getValue() && player.distanceTo(target) <= maxReach + 0.5) {
             player.setSprinting(false);
             client.options.sprintKey.setPressed(false);
         }
-        // Нейро: если обучено 5+ минут (dataset 80+ и 60+ epochs) — наводится твоими движениями мыши
+        
         if(neuroLearn.getValue() && exp.nefor.client.system.neural.NeuroDataset.size() >= 80 && exp.nefor.client.system.neural.NeuroModel.get().epochsTrained >= 15){
             float[] ang = RotationUtil.getRotations(target, leadSec);
             float dYaw = net.minecraft.util.math.MathHelper.wrapDegrees(ang[0] - player.getYaw());
@@ -136,14 +136,14 @@ public class KillAura extends Module {
             exp.nefor.client.system.rotation.SmoothRotationManager.setTargetWithFactor(nextYaw, nextPitch, factor);
         } else {
             RotationEngine.rotateTo(target, profile, leadSec);
-            // подсказка если включил нейро но не дообучил
+            
             if(neuroLearn.getValue() && player.age % 80 == 0){
                 net.minecraft.client.MinecraftClient.getInstance().player.sendMessage(net.minecraft.text.Text.literal("§7[Neuro] нужно 5+ мин тренировки: "+exp.nefor.client.system.neural.NeuroDataset.size()+"/80, epochs "+exp.nefor.client.system.neural.NeuroModel.get().epochsTrained+"/15 — иди в Title → Нейро Тренировка"), true);
             }
         }
 
-        // === ЛОГИКА АТАКИ ===
-        // Reach строго 3.0 без слабины: Grim Hitboxes флагит удары на грани
+        
+        
         double eyeDist = player.getEyePos().distanceTo(target.getEyePos());
         if (eyeDist > maxReach) return;
         if (player.distanceTo(target) > maxReach + 0.3) return;
@@ -152,19 +152,19 @@ public class KillAura extends Module {
         float aimFov = moving ? 24f : currentProfile().fovCheck;
         if (!RotationUtil.isLookingAt(target, aimFov)) return;
 
-        // Строгая проверка хитбокса по СЕРВЕРНОЙ ротации (снапшот): луч обязан
-        // пересекать бокс цели — иначе удар мимо и Grim Hitboxes. Именно камера
-        // в хитбоксе, а не приблизительный угол.
+        
+        
+        
         if (!exp.nefor.client.util.RaycastUtil.isAimingAt(player, srvYaw, srvPitch, target, maxReach)) return;
 
         if (player.isUsingItem() || player.isBlocking()) return;
-        // WindHop пауза уже выше, тут не блокируем лишний раз
+        
         if (exp.nefor.client.util.client.MultiActionsBypass.isActive() && !moving) return;
 
         long now = System.currentTimeMillis();
 
         if (isMace && maceSpam.getValue()) {
-            // СПАМ МЕЙСОМ — не ждём КД
+            
             if (player.fallDistance > 1.5F) {
                 doAttack(client, player, target, srvYaw, srvPitch);
                 attackedThisJump = true;
@@ -176,7 +176,7 @@ public class KillAura extends Module {
             }
         } else {
             float cd = player.getAttackCooldownProgress(0.0f);
-            // фиксит "бьёт без КД до крита": если onlyCrits вкл — ждём полный КД 0.995 и падение
+            
             if (onlyCrits.getValue()) {
                 if (cd < 0.995f) return;
                 if (attackedThisJump) return;
@@ -184,8 +184,8 @@ public class KillAura extends Module {
                 if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return;
                 if (player.fallDistance <= 0.0F) return;
                 if (player.isSprinting()) {
-                    // sprint-reset: сервер считает крит по состоянию на момент удара,
-                    // поэтому спринт гасим прямо перед атакой вместо отказа от неё
+                    
+                    
                     player.setSprinting(false);
                     client.options.sprintKey.setPressed(false);
                 }
@@ -200,8 +200,8 @@ public class KillAura extends Module {
     private void doAttack(MinecraftClient client, ClientPlayerEntity player, LivingEntity target, float srvYaw, float srvPitch) {
         float ry = player.getYaw();
         float rp = player.getPitch();
-        // бьём серверной ротацией (той, что уже видна серверу): атака обязана
-        // совпасть с последним flying-пакетом, иначе Grim Hitboxes
+        
+        
         player.setYaw(srvYaw);
         player.setPitch(srvPitch);
         if(!keepSprint.getValue()){
@@ -218,7 +218,7 @@ public class KillAura extends Module {
         if (attackedThisJump) return false;
         if (player.isOnGround()) return false;
         if (player.isTouchingWater() || player.isClimbing() || player.hasVehicle()) return false;
-        // спринт больше не блокирует: гасится sprint-reset перед ударом
+        
         return player.fallDistance > 0.0F;
     }
 

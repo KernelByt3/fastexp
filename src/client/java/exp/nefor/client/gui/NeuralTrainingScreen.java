@@ -78,7 +78,7 @@ public class NeuralTrainingScreen extends NeforScreen {
             else spawnTarget();
         }
 
-        // pop-in точки: быстро вырастает при спавне
+        
         float pop = exp.nefor.client.util.AnimationUtil.easeOutCubic(
                 Math.min(1f, (System.currentTimeMillis() - spawnTime) / 160f));
         float rr = Math.max(2f, targetR * (0.3f + 0.7f * pop));

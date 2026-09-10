@@ -7,16 +7,16 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Простая нейро-модель: 3 веса + bias, обучается по датасету.
- * На вход: deltaYaw, deltaPitch, dist -> выход: smoothing factor
- * Обучение: градиентный спуск по epochs, как в python.
- */
+
+
+
+
+
 public final class NeuroModel {
     private static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("nefor").resolve("neural_model.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // веса
+    
     public float wYaw = 0.18f;
     public float wPitch = 0.12f;
     public float wDist = 0.04f;
@@ -39,7 +39,7 @@ public final class NeuroModel {
         var data = NeuroDataset.all();
         if(data.isEmpty()) return;
         epochs = Math.min(epochs, 40);
-        // SGD по перемешанным данным: быстрее сходится и не зацикливается на порядке
+        
         var shuffled = new java.util.ArrayList<>(data);
         java.util.Collections.shuffle(shuffled);
         float lr = 0.004f;
@@ -49,9 +49,9 @@ public final class NeuroModel {
         for(int e=0;e<epochs;e++){
             float loss=0;
             for(var s: shuffled){
-                // градиент по сырому выходу (без clamp — иначе насыщение глушит обучение)
+                
                 float pred = raw(s.deltaYaw(), s.deltaPitch(), s.dist());
-                // цель: реакция 80-250мс -> идеальный smoothing 0.18-0.34
+                
                 float target = s.hit() ? 0.18f + Math.min(0.16f, s.reactionMs()/1200f) : 0.34f;
                 float err = pred - target;
                 loss += err*err;
@@ -61,14 +61,14 @@ public final class NeuroModel {
                 bias -= lr * err * 0.5f;
             }
             loss /= shuffled.size();
-            // early stop: loss встал — дальше только переобучение
+            
             if (best - loss < 1e-6f) { if (++bad >= 3) { lastLoss = loss; done++; break; } }
             else { bad = 0; best = loss; }
             lastLoss = loss;
             done++;
             epochsTrained++;
             lr *= 0.95f;
-            // clamp
+            
             wYaw = Math.max(0.05f, Math.min(0.4f, wYaw));
             wPitch = Math.max(0.05f, Math.min(0.4f, wPitch));
             bias = Math.max(0.12f, Math.min(0.35f, bias));
