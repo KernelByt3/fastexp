@@ -20,6 +20,9 @@ public class AntiAfk extends Module {
     private final KeybindSetting swayToggleBind = new KeybindSetting("Бинд покачивания", () -> sway.toggle());
 
     private int next = 0;
+    private long swayUntil = 0;
+    private float swayYaw = 0f;
+    private float swayPitch = 0f;
 
     public AntiAfk() {
         super("AntiAFK", "Качает головой, чтобы не выкинуло за АФК", Category.PLAYER, GLFW.GLFW_KEY_UNKNOWN);
@@ -37,6 +40,18 @@ public class AntiAfk extends Module {
         if (client.player == null) return;
         if (!sway.getValue()) return;
 
+        long now = System.currentTimeMillis();
+        // покачивание идёт в silent-ротацию (пакеты), камера НЕ трогается
+        if (now < swayUntil) {
+            exp.nefor.client.system.rotation.SmoothRotationManager.setTarget(
+                    swayYaw, swayPitch, exp.nefor.client.system.rotation.RotationProfile.VANILLA);
+            return;
+        }
+        if (swayUntil != 0) {
+            swayUntil = 0;
+            exp.nefor.client.system.rotation.SmoothRotationManager.release();
+        }
+
         if (--next <= 0) {
             next = ClickUtil.rand(40, 80);
 
@@ -49,8 +64,9 @@ public class AntiAfk extends Module {
             float deltaYaw = (float) Math.sin(time) * ClickUtil.rand(20, 40) * scale;
             float deltaPitch = (float) Math.cos(time) * ClickUtil.rand(10, 20) * scale;
 
-            client.player.setYaw(baseYaw + deltaYaw);
-            client.player.setPitch(basePitch + deltaPitch);
+            swayYaw = baseYaw + deltaYaw;
+            swayPitch = basePitch + deltaPitch;
+            swayUntil = now + 1000;
         }
     }
 }
