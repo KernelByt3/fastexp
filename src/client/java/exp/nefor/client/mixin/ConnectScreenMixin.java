@@ -53,7 +53,7 @@ public abstract class ConnectScreenMixin implements CustomRenderedScreen {
         ci.cancel();
         if (!nefor$widgetsCleared) {
             nefor$widgetsCleared = true;
-            ((Screen) (Object) this).clearChildren();
+            ((ScreenAccessor) (Object) this).nefor$clearChildren();
         }
     }
 

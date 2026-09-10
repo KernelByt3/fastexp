@@ -15,7 +15,8 @@
 		"LivingEntityJumpMixin",
 		"NoRenderMixin",
 		"ScreenBackgroundMixin",
-		"ConnectScreenMixin"
+		"ConnectScreenMixin",
+		"ScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1
