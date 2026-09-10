@@ -44,4 +44,8 @@ public class GhostLoginListener extends GhostListenerBase
     public void onQueryRequest(net.minecraft.network.packet.s2c.login.LoginQueryRequestS2CPacket packet) {
         // запросы (бренд и т.п.) игнорим — сервер обычно идёт дальше
     }
+
+    @Override
+    public void onCookieRequest(net.minecraft.network.packet.s2c.common.CookieRequestS2CPacket packet) {
+    }
 }

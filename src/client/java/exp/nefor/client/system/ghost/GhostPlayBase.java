@@ -490,4 +490,64 @@ public abstract class GhostPlayBase extends GhostListenerBase implements net.min
 @Override
     public void onGameTestHighlightPos(net.minecraft.network.packet.s2c.play.GameTestHighlightPosS2CPacket packet) {
     }
+
+    @Override
+    public void onKeepAlive(net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket packet) {
+    }
+
+    @Override
+    public void onPing(net.minecraft.network.packet.s2c.common.CommonPingS2CPacket packet) {
+    }
+
+    @Override
+    public void onCustomPayload(net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket packet) {
+    }
+
+    @Override
+    public void onDisconnect(net.minecraft.network.packet.s2c.common.DisconnectS2CPacket packet) {
+    }
+
+    @Override
+    public void onResourcePackSend(net.minecraft.network.packet.s2c.common.ResourcePackSendS2CPacket packet) {
+    }
+
+    @Override
+    public void onResourcePackRemove(net.minecraft.network.packet.s2c.common.ResourcePackRemoveS2CPacket packet) {
+    }
+
+    @Override
+    public void onSynchronizeTags(net.minecraft.network.packet.s2c.common.SynchronizeTagsS2CPacket packet) {
+    }
+
+    @Override
+    public void onStoreCookie(net.minecraft.network.packet.s2c.common.StoreCookieS2CPacket packet) {
+    }
+
+    @Override
+    public void onServerTransfer(net.minecraft.network.packet.s2c.common.ServerTransferS2CPacket packet) {
+    }
+
+    @Override
+    public void onCustomReportDetails(net.minecraft.network.packet.s2c.common.CustomReportDetailsS2CPacket packet) {
+    }
+
+    @Override
+    public void onServerLinks(net.minecraft.network.packet.s2c.common.ServerLinksS2CPacket packet) {
+    }
+
+    @Override
+    public void onClearDialog(net.minecraft.network.packet.s2c.common.ClearDialogS2CPacket packet) {
+    }
+
+    @Override
+    public void onShowDialog(net.minecraft.network.packet.s2c.common.ShowDialogS2CPacket packet) {
+    }
+
+    @Override
+    public void onCookieRequest(net.minecraft.network.packet.s2c.common.CookieRequestS2CPacket packet) {
+    }
+
+    @Override
+    public void onPingResult(net.minecraft.network.packet.s2c.query.PingResultS2CPacket packet) {
+    }
 }

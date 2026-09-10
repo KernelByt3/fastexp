@@ -24,12 +24,4 @@ public abstract class GhostListenerBase implements net.minecraft.network.listene
     public boolean isConnectionOpen() {
         return ghost != null && ghost.isOpen();
     }
-
-    @Override
-    public void onCookieRequest(net.minecraft.network.packet.s2c.common.CookieRequestS2CPacket packet) {
-    }
-
-    @Override
-    public void onPingResult(net.minecraft.network.packet.s2c.query.PingResultS2CPacket packet) {
-    }
 }

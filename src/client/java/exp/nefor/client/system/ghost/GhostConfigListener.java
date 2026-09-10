@@ -110,4 +110,8 @@ public class GhostConfigListener extends GhostListenerBase
     @Override
     public void onShowDialog(net.minecraft.network.packet.s2c.common.ShowDialogS2CPacket packet) {
     }
+
+    @Override
+    public void onCookieRequest(net.minecraft.network.packet.s2c.common.CookieRequestS2CPacket packet) {
+    }
 }
