@@ -11,7 +11,7 @@ import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 public class NeforClient implements ClientModInitializer {
 
 	/** Номер сборки: сверяй с экраном (watermark/title) что тестируешь свежее. */
-	public static final int BUILD = 13;
+	public static final int BUILD = 14;
 
 	@Override
 	public void onInitializeClient() {
