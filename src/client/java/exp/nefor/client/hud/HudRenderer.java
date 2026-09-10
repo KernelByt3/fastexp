@@ -343,8 +343,9 @@ public class HudRenderer {
             if (client.getNetworkHandler() == null) return;
             var entry = client.getNetworkHandler().getPlayerListEntry(p.getUuid());
             if (entry == null) return;
-            var tex = client.getTextureManager().getTexture(entry.getSkinTextures().texturePath());
-            int glId = ((net.minecraft.client.texture.AbstractTexture) tex).getGlId();
+            var tex = client.getTextureManager().getTexture(entry.getSkinTextures().body().texturePath());
+            if (!(tex.getGlTexture() instanceof net.minecraft.client.texture.GlTexture gl)) return;
+            int glId = gl.getGlId();
             if (glId == 0) return;
             RenderSystem.drawGlTexture(glId, x, y, size, size, 8f / 64f, 8f / 64f, 16f / 64f, 16f / 64f);
             RenderSystem.drawGlTexture(glId, x, y, size, size, 40f / 64f, 8f / 64f, 48f / 64f, 16f / 64f);
