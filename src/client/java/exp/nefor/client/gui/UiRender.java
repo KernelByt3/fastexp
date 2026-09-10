@@ -32,6 +32,14 @@ public final class UiRender {
     public static void dimScreen(int width, int height, float alpha) {
         roundRect(0, 0, width, height, 0,
                 new float[]{0.04f, 0.03f, 0.08f, alpha},
+                new float[]{1, 1, 1, 0.08f}, 1,
+                new float[]{0.54f, 0.17f, 0.89f, 0.12f}, 5);
+    }
+
+    /** Непрозрачная подложка для наших экранов — перекрывает панораму/мир. */
+    public static void background(int width, int height) {
+        roundRect(0, 0, width, height, 0,
+                new float[]{0.055f, 0.055f, 0.085f, 1f},
                 new float[]{0, 0, 0, 0}, 0,
                 new float[]{0, 0, 0, 0}, 0);
     }

@@ -47,7 +47,7 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
-        UiRender.dimScreen(this.width, this.height, 0.55f);
+        UiRender.background(this.width, this.height);
 
         float titleSize = 26.0f;
         float titleWidth = exp.nefor.client.render.RenderSystem.textWidth("nefor", titleSize);

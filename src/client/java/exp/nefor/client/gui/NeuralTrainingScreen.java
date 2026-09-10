@@ -38,7 +38,7 @@ public class NeuralTrainingScreen extends NeforScreen {
 
     @Override
     public void renderNefor() {
-        UiRender.dimScreen(width, height, 0.6f);
+        UiRender.background(width, height);
 
         String title = "neuro training";
         RenderSystem.drawText(title, width / 2f - RenderSystem.textWidth(title, 15f) / 2, 16, 15f, 0xFFFFFFFF);

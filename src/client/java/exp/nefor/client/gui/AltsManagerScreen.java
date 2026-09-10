@@ -38,7 +38,7 @@ public class AltsManagerScreen extends NeforScreen {
 
     @Override
     public void renderNefor() {
-        UiRender.dimScreen(this.width, this.height, 0.6f);
+        UiRender.background(this.width, this.height);
 
         int x = cx();
         int y = Math.max(20, this.height / 2 - 190);
