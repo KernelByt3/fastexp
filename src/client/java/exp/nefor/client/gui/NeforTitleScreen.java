@@ -63,7 +63,7 @@ public class NeforTitleScreen extends Screen implements CustomRenderedScreen {
         float titleY = this.height / 2.0f - 100.0f - (1f - titleE) * 12f;
         exp.nefor.client.render.RenderSystem.drawText("nefor", titleX, titleY, titleSize, 0xFFFFFFFF);
 
-        String sub = "fabric 1.21.11";
+        String sub = "fabric 1.21.11 b" + exp.nefor.client.NeforClient.BUILD;
         exp.nefor.client.render.RenderSystem.drawText(sub,
                 this.width / 2.0f - exp.nefor.client.render.RenderSystem.textWidth(sub, 11.0f) / 2.0f,
                 titleY + 30.0f, 11.0f, 0xFF9A9AA5);

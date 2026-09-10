@@ -91,6 +91,7 @@ public class HudRenderer {
                     if(e!=null) info += " | "+e.getLatency()+" ms";
                 }
             }catch(Exception ignored){}
+            info += " | b" + exp.nefor.client.NeforClient.BUILD;
             float w = padX + dot + gap + RenderSystem.textWidth(base, size) + 3 + RenderSystem.textWidth(tag, 9f) + 10 + RenderSystem.textWidth(info, 8f) + padX + 6;
             w = Math.max(w, 148f);
             float h = size + padY * 2;
@@ -252,6 +253,7 @@ public class HudRenderer {
                 var e = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
                 if(e!=null) info += " | "+e.getLatency()+" ms";
             }
+            info += " | b" + exp.nefor.client.NeforClient.BUILD;
             RenderSystem.drawText(info, x+padX+dot+gap+ RenderSystem.textWidth("Nefor", size)+ RenderSystem.textWidth(tag,9f)+10, y+padY+8, 8f, 0xFF6E6E7A);
         }catch(Exception ignored){}
     }
