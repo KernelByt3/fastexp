@@ -18,6 +18,7 @@ import exp.nefor.client.module.impl.player.AutoSell;
 import exp.nefor.client.module.impl.player.Bot;
 import exp.nefor.client.module.impl.player.FakePlayer;
 import exp.nefor.client.module.impl.render.FullBright;
+import exp.nefor.client.module.impl.render.ESP;
 import exp.nefor.client.module.impl.render.Hud;
 import exp.nefor.client.module.impl.render.NoRender;
 import exp.nefor.client.module.impl.render.NoWeather;
@@ -60,6 +61,7 @@ public class ModuleManager {
         register(new NoRender());
         register(new NoWeather());
         register(new Hud());
+        register(new ESP());
         register(new WindHop());
 
         EventBus.subscribe(INSTANCE);
