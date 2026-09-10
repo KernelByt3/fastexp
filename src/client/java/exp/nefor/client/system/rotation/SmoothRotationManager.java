@@ -141,8 +141,6 @@ public final class SmoothRotationManager {
         if (mc.player == null) { reset(); return; }
         if (!active) return;
         
-        if (System.currentTimeMillis() - lastUpdate > 380) { release(); return; }
-        if (returning && System.currentTimeMillis() - returnStart > 500) { release(); return; }
         if (holdUntil > 0) {
             if (System.currentTimeMillis() < holdUntil) {
                 applyToPlayer(currentYaw, currentPitch);
@@ -152,6 +150,8 @@ public final class SmoothRotationManager {
             release();
             return;
         }
+        if (System.currentTimeMillis() - lastUpdate > 380) { release(); return; }
+        if (returning && System.currentTimeMillis() - returnStart > 500) { release(); return; }
 
         long nowNs = System.nanoTime();
         float dt = (nowNs - lastTickNs) / 1_000_000_000f;

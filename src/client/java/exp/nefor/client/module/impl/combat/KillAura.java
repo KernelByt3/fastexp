@@ -61,12 +61,20 @@ public class KillAura extends Module {
     }
 
     @Override
+    protected void onEnable() {
+        super.onEnable();
+        var other = exp.nefor.client.module.ModuleManager.get(
+                exp.nefor.client.module.impl.combat.NeuroAura.class);
+        if (other != null && other.isEnabled()) other.setEnabled(false);
+    }
+
+    @Override
     public void onDisable() {
         super.onDisable();
         target = null;
         attackedThisJump = false;
         lastAttackTime = 0;
-        exp.nefor.client.system.rotation.SmoothRotationManager.hold(600);
+        exp.nefor.client.system.rotation.SmoothRotationManager.hold(300);
     }
 
     @Override
