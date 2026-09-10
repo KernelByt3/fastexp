@@ -23,6 +23,10 @@ public final class RotationEngine {
     }
 
     public static void rotateTo(LivingEntity target, RotationProfile profile, double leadSec) {
+        rotateTo(target, profile, leadSec, 0f, 0f);
+    }
+
+    public static void rotateTo(LivingEntity target, RotationProfile profile, double leadSec, float yawOff, float pitchOff) {
         if (target == null) return;
 
         float[] base = RotationUtil.getRotations(target, leadSec);
@@ -37,8 +41,8 @@ public final class RotationEngine {
             lastNoiseTime = now;
         }
 
-        float yaw = MathHelper.wrapDegrees(base[0] + cachedYawNoise);
-        float pitch = MathHelper.clamp(base[1] + cachedPitchNoise, -90f, 90f);
+        float yaw = MathHelper.wrapDegrees(base[0] + cachedYawNoise + yawOff);
+        float pitch = MathHelper.clamp(base[1] + cachedPitchNoise + pitchOff, -90f, 90f);
 
         SmoothRotationManager.setTarget(yaw, pitch, profile);
     }

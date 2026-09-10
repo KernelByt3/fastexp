@@ -35,14 +35,19 @@ public class KillAura extends Module {
     private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
     private final BooleanSetting throughWalls = new BooleanSetting("Через стены", false);
     private final ChoiceSetting targetMode = new ChoiceSetting("Приоритет", List.of("Ближайший","Здоровье","Угол"), 0);
+    private final BooleanSetting humanize = new BooleanSetting("Гуманность", true);
 
     private LivingEntity target;
     private boolean attackedThisJump;
     private long lastAttackTime;
+    private long targetSince = 0;
+    private long reactionMs = 120;
+    private float overYaw = 0f;
+    private float overPitch = 0f;
 
     public KillAura() {
         super("KillAura", "Убивает", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(range, onlyCrits, maceSpam, rotationMode, aimPoint, neuroLearn, keepSprint, throughWalls, targetMode, rotateCamera);
+        addSettings(range, onlyCrits, maceSpam, rotationMode, aimPoint, neuroLearn, keepSprint, throughWalls, targetMode, rotateCamera, humanize);
     }
 
     private RotationProfile currentProfile() {
@@ -61,7 +66,7 @@ public class KillAura extends Module {
         target = null;
         attackedThisJump = false;
         lastAttackTime = 0;
-        exp.nefor.client.system.rotation.SmoothRotationManager.release();
+        exp.nefor.client.system.rotation.SmoothRotationManager.hold(600);
     }
 
     @Override
@@ -96,20 +101,32 @@ public class KillAura extends Module {
         if(System.currentTimeMillis() - WindHop.lastWindMs < 900) return;
         boolean holdingWind = player.getMainHandStack().isOf(Items.WIND_CHARGE) || player.getOffHandStack().isOf(Items.WIND_CHARGE);
         if(holdingWind && (player.isUsingItem() || player.getPitch() > 70 || client.options.useKey.isPressed())){
-            exp.nefor.client.system.rotation.SmoothRotationManager.release();
+            exp.nefor.client.system.rotation.SmoothRotationManager.hold(500);
             return;
         }
 
-        
+        LivingEntity prevTarget = target;
         if (target != null && target.isAlive() && !target.isRemoved() && player.distanceTo(target) <= range.getValue()+1.0 && exp.nefor.client.util.RaycastUtil.canHit(player, target, range.getValue()+0.5)) {
             
         } else {
             target = findTarget(player, world, range.getValue());
         }
         if (target == null) {
-            exp.nefor.client.system.rotation.SmoothRotationManager.release();
+            exp.nefor.client.system.rotation.SmoothRotationManager.hold(800);
             return;
         }
+        long nowMs = System.currentTimeMillis();
+        exp.nefor.client.system.rotation.SmoothRotationManager.humanize = humanize.getValue();
+        if (target != prevTarget) {
+            targetSince = nowMs;
+            var rnd = ThreadLocalRandom.current();
+            reactionMs = 90 + rnd.nextInt(130);
+            overYaw = (2f + rnd.nextFloat() * 3f) * (rnd.nextBoolean() ? 1f : -1f);
+            overPitch = (1f + rnd.nextFloat() * 2f) * (rnd.nextBoolean() ? 1f : -1f);
+        }
+        boolean reacting = humanize.getValue() && nowMs - targetSince < reactionMs;
+        overYaw *= 0.88f;
+        overPitch *= 0.88f;
 
         RotationProfile profile = currentProfile();
         
@@ -123,8 +140,9 @@ public class KillAura extends Module {
             client.options.sprintKey.setPressed(false);
         }
         
-        if(neuroLearn.getValue() && exp.nefor.client.system.neural.NeuroDataset.size() >= 80 && exp.nefor.client.system.neural.NeuroModel.get().epochsTrained >= 15){
-            float[] ang = RotationUtil.getRotations(target, leadSec);
+        if (reacting) {
+            
+        } else if(neuroLearn.getValue() && exp.nefor.client.system.neural.NeuroDataset.size() >= 80 && exp.nefor.client.system.neural.NeuroModel.get().epochsTrained >= 15){            float[] ang = RotationUtil.getRotations(target, leadSec);
             float dYaw = net.minecraft.util.math.MathHelper.wrapDegrees(ang[0] - player.getYaw());
             float dPitch = ang[1] - player.getPitch();
             float dist = (float)player.distanceTo(target);
@@ -136,7 +154,7 @@ public class KillAura extends Module {
             nextPitch = exp.nefor.client.system.rotation.GcdUtil.snapAngle(player.getPitch(), nextPitch, gcd);
             exp.nefor.client.system.rotation.SmoothRotationManager.setTargetWithFactor(nextYaw, nextPitch, factor);
         } else {
-            RotationEngine.rotateTo(target, profile, leadSec);
+            RotationEngine.rotateTo(target, profile, leadSec, overYaw, overPitch);
             
             if(neuroLearn.getValue() && player.age % 80 == 0){
                 net.minecraft.client.MinecraftClient.getInstance().player.sendMessage(net.minecraft.text.Text.literal("§7[Neuro] нужно 5+ мин тренировки: "+exp.nefor.client.system.neural.NeuroDataset.size()+"/80, epochs "+exp.nefor.client.system.neural.NeuroModel.get().epochsTrained+"/15 — иди в Title → Нейро Тренировка"), true);

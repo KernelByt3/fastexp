@@ -23,6 +23,8 @@ public final class SmoothRotationManager {
     
     private static boolean returning = false;
     private static long returnStart = 0;
+    public static boolean humanize = true;
+    private static long holdUntil = 0;
 
     
     private static float velocityYaw = 0;
@@ -43,6 +45,7 @@ public final class SmoothRotationManager {
         targetPitch = MathHelper.clamp(pitch, -90f, 90f);
         lastUpdate = System.currentTimeMillis();
         returning = false;
+        holdUntil = 0;
     }
     public static void setTargetWithFactor(float yaw, float pitch, float factor){
         
@@ -62,6 +65,7 @@ public final class SmoothRotationManager {
         customFactor = factor;
         lastUpdate = System.currentTimeMillis();
         returning = false;
+        holdUntil = 0;
     }
     private static float customFactor = -1f;
 
@@ -82,12 +86,14 @@ public final class SmoothRotationManager {
         active = true;
         lastUpdate = System.currentTimeMillis();
         returning = false;
+        holdUntil = 0;
         applyToPlayer(currentYaw, currentPitch);
     }
 
     public static void reset() {
         active = false;
         returning = false;
+        holdUntil = 0;
         velocityYaw = velocityPitch = 0;
         lastUpdate = 0;
         customFactor = -1f;
@@ -103,6 +109,15 @@ public final class SmoothRotationManager {
 
 
 
+    public static void hold(long ms) {
+        if (!active || mc.player == null) return;
+        targetYaw = currentYaw;
+        targetPitch = currentPitch;
+        lastUpdate = System.currentTimeMillis();
+        returning = false;
+        holdUntil = lastUpdate + Math.max(0, ms);
+    }
+
     public static void release() {
         if (!active || mc.player == null) { reset(); return; }
         float camYaw = mc.player.getYaw();
@@ -112,6 +127,7 @@ public final class SmoothRotationManager {
         lastUpdate = System.currentTimeMillis();
         returning = true;
         returnStart = lastUpdate;
+        holdUntil = 0;
     }
 
     public static boolean isActive() { return active && System.currentTimeMillis() - lastUpdate < 700; }
@@ -127,6 +143,15 @@ public final class SmoothRotationManager {
         
         if (System.currentTimeMillis() - lastUpdate > 380) { release(); return; }
         if (returning && System.currentTimeMillis() - returnStart > 500) { release(); return; }
+        if (holdUntil > 0) {
+            if (System.currentTimeMillis() < holdUntil) {
+                applyToPlayer(currentYaw, currentPitch);
+                return;
+            }
+            holdUntil = 0;
+            release();
+            return;
+        }
 
         long nowNs = System.nanoTime();
         float dt = (nowNs - lastTickNs) / 1_000_000_000f;
@@ -138,9 +163,16 @@ public final class SmoothRotationManager {
         
         
         float gcd = GcdUtil.getGcd();
-        float rawDeltaYaw = MathHelper.wrapDegrees(targetYaw - currentYaw);
+        float aimYaw = targetYaw;
+        float aimPitch = targetPitch;
+        if (humanize && !returning && holdUntil <= 0) {
+            double t = nowNs / 1_000_000_000.0;
+            aimYaw += Math.sin(t * 4.59) * 0.30f + Math.sin(t * 10.27 + 1.3) * 0.14f;
+            aimPitch += Math.sin(t * 6.91 + 0.7) * 0.22f + Math.sin(t * 13.13 + 2.1) * 0.10f;
+        }
+        float rawDeltaYaw = MathHelper.wrapDegrees(aimYaw - currentYaw);
         float deltaYaw = rawDeltaYaw;
-        float deltaPitch = targetPitch - currentPitch;
+        float deltaPitch = aimPitch - currentPitch;
         if (Math.abs(deltaYaw) < 0.2f && Math.abs(deltaPitch) < 0.2f) {
             if (returning) { reset(); return; } 
             

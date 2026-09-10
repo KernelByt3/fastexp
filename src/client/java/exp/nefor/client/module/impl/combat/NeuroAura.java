@@ -25,22 +25,26 @@ public class NeuroAura extends Module {
     private final SliderSetting range = new SliderSetting("Радиус", 2.8, 4.5, 0.1, 3.2);
     private final BooleanSetting onlyCrits = new BooleanSetting("Только криты", true);
     private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
+    private final BooleanSetting humanize = new BooleanSetting("Гуманность", true);
     private final BooleanSetting autoTrain = new BooleanSetting("Авто-дообучение", false);
 
     private LivingEntity target;
     private long aimLockMs = 0;
+    private long reactionMs = 120;
+    private float overYaw = 0f;
+    private float overPitch = 0f;
     private float lastDeltaYaw, lastDeltaPitch, lastDist;
 
     public NeuroAura() {
         super("NeuroAura", "Нейро-аура обучаемая", Category.COMBAT, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(neuro, range, onlyCrits, rotateCamera, autoTrain);
+        addSettings(neuro, range, onlyCrits, rotateCamera, humanize, autoTrain);
     }
 
     @Override
     public void onDisable() {
         super.onDisable();
         target = null;
-        SmoothRotationManager.release();
+        SmoothRotationManager.hold(600);
     }
 
     @Override
@@ -71,10 +75,21 @@ public class NeuroAura extends Module {
             target = findTarget(player, range.getValue());
         }
         if (target == null) {
-            SmoothRotationManager.release();
+            SmoothRotationManager.hold(800);
             return;
         }
-        if (target != prev) aimLockMs = System.currentTimeMillis();
+        long nowMs = System.currentTimeMillis();
+        SmoothRotationManager.humanize = humanize.getValue();
+        if (target != prev) {
+            aimLockMs = nowMs;
+            var rnd = java.util.concurrent.ThreadLocalRandom.current();
+            reactionMs = 90 + rnd.nextInt(130);
+            overYaw = (2f + rnd.nextFloat() * 3f) * (rnd.nextBoolean() ? 1f : -1f);
+            overPitch = (1f + rnd.nextFloat() * 2f) * (rnd.nextBoolean() ? 1f : -1f);
+        }
+        boolean reacting = humanize.getValue() && nowMs - aimLockMs < reactionMs;
+        overYaw *= 0.88f;
+        overPitch *= 0.88f;
 
         
         
@@ -101,7 +116,10 @@ public class NeuroAura extends Module {
             factor = 0.26f;
         }
 
-        SmoothRotationManager.setTargetWithFactor(baseYaw + deltaYaw, basePitch + deltaPitch, factor);
+        if (!reacting) {
+            SmoothRotationManager.setTargetWithFactor(
+                    baseYaw + deltaYaw + overYaw, basePitch + deltaPitch + overPitch, factor);
+        }
 
         // видимый доворот камеры за прицелом (пакеты те же, разница только в картинке)
         if (rotateCamera.getValue() && RotationUtil.isRotating) {
