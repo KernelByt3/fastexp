@@ -24,7 +24,7 @@ public class NeuroAura extends Module {
     private final BooleanSetting neuro = new BooleanSetting("Нейро", true);
     private final SliderSetting range = new SliderSetting("Радиус", 2.8, 4.5, 0.1, 3.2);
     private final BooleanSetting onlyCrits = new BooleanSetting("Только криты", true);
-    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
+    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", false);
     private final BooleanSetting humanize = new BooleanSetting("Гуманность", true);
     private final BooleanSetting autoTrain = new BooleanSetting("Авто-дообучение", false);
 

@@ -32,7 +32,7 @@ public class KillAura extends Module {
     private final ChoiceSetting aimPoint = new ChoiceSetting("Точка", List.of("Авто", "Голова", "Грудь", "Ноги", "Ближайшая"), 4);
     private final BooleanSetting neuroLearn = new BooleanSetting("Нейро (твои движения)", false);
     private final BooleanSetting keepSprint = new BooleanSetting("KeepSprint", false);
-    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", true);
+    private final BooleanSetting rotateCamera = new BooleanSetting("Камера", false);
     private final BooleanSetting throughWalls = new BooleanSetting("Через стены", false);
     private final ChoiceSetting targetMode = new ChoiceSetting("Приоритет", List.of("Ближайший","Здоровье","Угол"), 0);
     private final BooleanSetting humanize = new BooleanSetting("Гуманность", true);
