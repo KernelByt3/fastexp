@@ -30,14 +30,14 @@ public class ESP extends Module {
     private final BooleanSetting players = new BooleanSetting("Игроки", true);
     private final BooleanSetting mobs = new BooleanSetting("Мобы", true);
     private final BooleanSetting items = new BooleanSetting("Предметы", false);
-    private final BooleanSetting box = new BooleanSetting("Боксы", true);
+    private final BooleanSetting boxes = new BooleanSetting("Боксы", true);
     private final BooleanSetting nametags = new BooleanSetting("Ники", true);
     private final BooleanSetting health = new BooleanSetting("ХП", true);
     private final SliderSetting range = new SliderSetting("Дистанция", 10, 120, 5, 60);
 
     public ESP() {
         super("ESP", "Боксы и ники сквозь стены", Category.RENDER, GLFW.GLFW_KEY_UNKNOWN);
-        addSettings(players, mobs, items, box, nametags, health, range);
+        addSettings(players, mobs, items, boxes, nametags, health, range);
     }
 
     @EventHandler
@@ -48,7 +48,7 @@ public class ESP extends Module {
         if (client.currentScreen != null) return;
 
         Camera camera = client.gameRenderer.getCamera();
-        Vec3d camPos = camera.getPos();
+        Vec3d camPos = camera.getCameraPos();
         float camYaw = camera.getYaw();
         float camPitch = camera.getPitch();
         int fov = 70;
@@ -96,7 +96,7 @@ public class ESP extends Module {
             }
             float[] col = friend ? new float[]{0.3f, 1f, 0.5f, 0.9f} : new float[]{1f, 1f, 1f, 0.85f};
 
-            if (box.getValue()) {
+            if (boxes.getValue()) {
                 float x0 = rect[0], y0 = rect[1], x1 = rect[2], y1 = rect[3];
                 float t = 1.2f;
                 float[] noLine = new float[]{0, 0, 0, 0};

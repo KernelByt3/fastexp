@@ -133,7 +133,6 @@ public class WindHop extends Module {
                 if (!aimReady()) {
                     if (now - timer > 1200) {
                         restoreSlot(player);
-                        SmoothRotationManager.release();
                         stop();
                     }
                     break;
@@ -163,7 +162,6 @@ public class WindHop extends Module {
                 if (now - timer < 200) break;
                 restoreSlot(player);
                 lastWindMs = System.currentTimeMillis();
-                SmoothRotationManager.release();
                 prevSlot = -1;
                 stop();
             }
@@ -202,8 +200,9 @@ public class WindHop extends Module {
         active = false;
         stage = 0;
         windSlot = -1;
-        // любой выход из хопа возвращает взгляд — иначе silent виснет навсегда
-        SmoothRotationManager.release();
+        // возврат мгновенный: yaw за хоп не менялся, pitch-снап по GCD-сетке чист.
+        // Глайд-отворачивание только для KillAura, хопу он не нужен.
+        SmoothRotationManager.reset();
     }
 
     private int findWindChargeHotbar() {
