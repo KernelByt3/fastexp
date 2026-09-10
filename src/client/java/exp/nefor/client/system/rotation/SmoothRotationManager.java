@@ -164,13 +164,13 @@ public final class SmoothRotationManager {
         } else {
             float s = profile.smoothing;
             float baseYaw = MathHelper.clamp(s * 0.62f, 0.08f, 0.20f);
-            float basePitch = MathHelper.clamp(s * 0.42f, 0.05f, 0.12f);
+            float basePitch = MathHelper.clamp(s * 0.70f, 0.08f, 0.20f);
             factorYaw = 1f - (float)Math.pow(1f - baseYaw, fpsFactor * 1.4f);
             factorPitch = 1f - (float)Math.pow(1f - basePitch, fpsFactor * 1.4f);
             maxYaw = switch (profile) {
                 case HYPIXEL -> 8f;
                 case REALLY_WORLD -> 10f;
-                case FUN_TIME -> 11f;
+                case FUN_TIME -> 14f;
                 default -> 24f;
             };
             maxPitch = 10f;

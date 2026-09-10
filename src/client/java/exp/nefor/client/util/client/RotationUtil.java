@@ -36,7 +36,7 @@ public final class RotationUtil {
     private static Entity smoothTarget = null;
     private static float smoothYaw = 0f;
     private static float smoothPitch = 0f;
-    private static final float AIM_SMOOTH = 0.6f;
+    private static final float AIM_SMOOTH = 0.75f;
 
 
     public static void setRotation(float yaw, float pitch, boolean moveCorrectionEnabled) {
