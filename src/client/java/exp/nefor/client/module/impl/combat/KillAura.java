@@ -144,7 +144,7 @@ public class KillAura extends Module {
 
         
         
-        double eyeDist = player.getEyePos().distanceTo(target.getEyePos());
+        double eyeDist = player.getEyePos().distanceTo(exp.nefor.client.util.RaycastUtil.closestPoint(target.getBoundingBox(), player.getEyePos()));
         if (eyeDist > maxReach) return;
         if (player.distanceTo(target) > maxReach + 0.3) return;
 
