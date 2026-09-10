@@ -384,6 +384,7 @@ public class ClickGui extends NeforScreen implements Bindable {
             case "Combat" -> "combat";
             case "Movement" -> "movement";
             case "Player" -> "player";
+            case "Bot" -> "player";
             default -> "misc";
         };
     }
