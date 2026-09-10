@@ -73,7 +73,7 @@ public class BotScreen extends NeforScreen {
                         live ? new float[]{1, 1, 1, 0.16f} : selectedFill(sel, hov),
                         new float[]{0, 0, 0, 0}, 0, new float[]{0, 0, 0, 0}, 0);
             }
-            String label = en.nick + (live ? "  ● LIVE" : "");
+            String label = en.nick + (live ? "  LIVE" : "");
             RenderSystem.drawText(label, x + 12, rowY + 8, 11f, live ? 0xFFFFFFFF : sel ? 0xFFFFFFFF : 0xFFB9B9C4);
             String mode = en.follow ? "follow" : "stay";
             RenderSystem.drawText(mode, x + W - 12 - RenderSystem.textWidth(mode, 9f), rowY + 9, 9f, 0xFF6E6E78);
