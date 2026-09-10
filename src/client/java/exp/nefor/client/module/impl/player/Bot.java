@@ -112,7 +112,7 @@ public class Bot extends Module {
         nick = nick.trim();
         if (nick.length() > 16) nick = nick.substring(0, 16);
         OtherClientPlayerEntity e = new OtherClientPlayerEntity(mc.world, new GameProfile(UUID.randomUUID(), nick));
-        Vec3d p = new Vec3d(mc.player.getX\(\), mc.player.getY\(\), mc.player.getZ\(\));
+        Vec3d p = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         e.setPosition(p.x + 1.0 + bots.size() * 0.7, p.y, p.z);
         e.setYaw(mc.player.getYaw());
         e.setBodyYaw(mc.player.getYaw());
@@ -151,7 +151,7 @@ public class Bot extends Module {
     public void bringToMe(Entry en) {
         var mc = MinecraftClient.getInstance();
         if (en == null || mc.player == null) return;
-        Vec3d p = new Vec3d(mc.player.getX\(\), mc.player.getY\(\), mc.player.getZ\(\));
+        Vec3d p = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         en.entity.setPosition(p.x + 1.0, p.y, p.z);
         en.entity.setVelocity(0, 0, 0);
     }
