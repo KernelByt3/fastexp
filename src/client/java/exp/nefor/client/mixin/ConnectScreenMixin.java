@@ -29,18 +29,41 @@ public abstract class ConnectScreenMixin implements CustomRenderedScreen {
     private final long nefor$openMs = System.currentTimeMillis();
     @Unique
     private boolean nefor$widgetsCleared = false;
+    @Unique
+    private boolean nefor$errLogged = false;
+
+    private static final org.slf4j.Logger nefor$log = org.slf4j.LoggerFactory.getLogger("nefor/connect");
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void nefor$killVanilla(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        ci.cancel();
-        if (!nefor$widgetsCleared) {
-            nefor$widgetsCleared = true;
-            ((ScreenAccessor) (Object) this).nefor$clearChildren();
+        try {
+            ci.cancel();
+            if (!nefor$widgetsCleared) {
+                nefor$widgetsCleared = true;
+                ((ScreenAccessor) (Object) this).nefor$clearChildren();
+            }
+        } catch (Throwable t) {
+            if (!nefor$errLogged) {
+                nefor$errLogged = true;
+                nefor$log.error("connect overlay failed, vanilla fallback", t);
+            }
         }
     }
 
     @Override
     public void nefor$renderOverlay() {
+        try {
+            nefor$drawOverlay();
+        } catch (Throwable t) {
+            if (!nefor$errLogged) {
+                nefor$errLogged = true;
+                nefor$log.error("connect overlay draw failed", t);
+            }
+        }
+    }
+
+    @Unique
+    private void nefor$drawOverlay() {
         MinecraftClient client = MinecraftClient.getInstance();
         int w = client.getWindow().getScaledWidth();
         int h = client.getWindow().getScaledHeight();

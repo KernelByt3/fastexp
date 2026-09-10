@@ -107,6 +107,8 @@ public class Bot extends Module {
             RenderSystem.notification("Боты только на сервере", Color.RED);
             return null;
         }
+        // без включённого модуля тик не качает коннект — включаем сами
+        if (!isEnabled()) setEnabled(true);
         if (nick == null || nick.isBlank()) nick = "Bot-" + (++num);
         nick = nick.trim();
         if (nick.length() > 16) nick = nick.substring(0, 16);
